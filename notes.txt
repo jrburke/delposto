@@ -1,0 +1,46 @@
+Start a new post in  /drafts. Start new folder, name not important.
+
+* index.md. Only this file is transformed.
+* Only index.md can have YAML at the top of the form:
+
+```markdown
+title: Something To Talk About
+tags: a b c
+~
+
+# A post
+
+
+```
+
+* post name->YYYY/MM/DD/slugged-title/
+
+* templates (global stuff at top level)
+    * index.html (template)
+    * index.atom (feed)
+    * tags.html
+    * YYYY
+        * MM
+            * DD
+                * post
+                    * index.html --> paths to common resources 4 dirs up
+    * tags
+        * tag
+            * index.html
+            * index.atom
+    * list
+        * page.html
+
+* built
+  -> output of
+* published
+    YYY
+        MM
+            DD
+                slugged-id
+                    index.md
+* drafts
+    * whatever
+        * index.md
+
+
