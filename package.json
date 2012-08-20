@@ -2,7 +2,10 @@
   "name": "delposto",
   "version": "0.0.1",
   "dependencies": {
-    "yaml": "~0.2.3"
+    "yaml": "~0.2.3",
+    "slug": "~0.2.2",
+    "showdown": "~0.2.0",
+    "mustache": "~0.5.2"
   },
   "bin": "bin/delposto.js",
   "main": "delposto"

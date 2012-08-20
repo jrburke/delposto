@@ -9,7 +9,9 @@
 'use strict';
 
 var file = require('../lib/file'),
-    path = require('path');
+    path = require('path'),
+    post = require('../lib/post'),
+    render = require('../lib/render');
 
 function twoDigit(num) {
     if (num < 10) {
@@ -26,7 +28,7 @@ function getDateDir() {
 }
 
 function publish(args) {
-    var draftContents,
+    var draftContents, postData, html,
         name = args[0] ? args[0] + '.md' : '',
         cwd = process.cwd(),
         draftsDir = path.join(cwd, 'drafts'),
@@ -51,14 +53,22 @@ function publish(args) {
         process.exit(1);
     }
 
-    draftContents = file.read(draftPath);
+    postData = post.fromFile(draftPath);
 
-    file.write(path.join)
+    pubPath = path.join(pubPath, postData.sluggedTitle);
+    file.mkdirs(pubPath);
 
-    console.log('Draft ' + draftPath + ' created.');
+    //Write out the post in HTML form.
+    html = render.fromFile(path.join(__dirname, '../templates/index.html'), {
+        title: postData.title,
+        content: postData.htmlContent
+    });
+    file.write(path.join(pubPath, 'index.html'), html);
+
+    console.log('Published ' + draftPath + ' to ' + pubPath);
 }
 
-draft.summary = 'Publishes a draft post in the "drafts" folder to "published" ' +
-                'updates the "built" directory with the post.';
+publish.summary = 'Publishes a draft post in the "drafts" folder to ' +
+                  '"published" updates the "built" directory with the post.';
 
-module.exports = draft;
+module.exports = publish;
