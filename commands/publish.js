@@ -23,24 +23,17 @@ function twoDigit(num) {
 
 function getDateDir() {
     var now = new Date();
-    return path.join(now.getFullYear(), twoDigit(now.getMonth() + 1),
-        twoDigit(now.getDate()));
+    return path.join(now.getFullYear().toString(),
+                           twoDigit(now.getMonth() + 1).toString(),
+                           twoDigit(now.getDate()).toString());
 }
 
 function publish(args) {
     var draftContents, postData, html,
-        name = args[0] ? args[0] + '.md' : '',
         cwd = process.cwd(),
-        draftsDir = path.join(cwd, 'drafts'),
-        draftPath = name && path.join(draftsDir, name),
+        draftPath = args[0],
         pubDir = path.join(cwd, 'published'),
         pubPath = path.join(pubDir, getDateDir());
-
-    if (!file.exists(draftsDir)) {
-        console.log('This does not appear to be a delposto project. ' +
-                    'Expected a "drafts" folder.');
-        process.exit(1);
-    }
 
     if (!file.exists(pubDir)) {
         console.log('This does not appear to be a delposto project. ' +
@@ -59,7 +52,7 @@ function publish(args) {
     file.mkdirs(pubPath);
 
     //Write out the post in HTML form.
-    html = render.fromFile(path.join(__dirname, '../templates/index.html'), {
+    html = render.fromFile(path.join(cwd, 'templates/index.html'), {
         title: postData.title,
         content: postData.htmlContent
     });
