@@ -1,0 +1,1 @@
+Put any common images for the site in here.

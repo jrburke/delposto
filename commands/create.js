@@ -29,6 +29,7 @@ function create(args) {
     file.mkdirs(dir);
     file.mkdirs(path.join(dir, 'drafts'));
     file.mkdirs(path.join(dir, 'published'));
+    file.mkdirs(path.join(dir, 'src-published'));
     file.copyDir(path.join(__dirname, '..', 'templates'), path.join(dir, 'templates'));
 
     process.chdir(dir);

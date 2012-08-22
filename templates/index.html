@@ -1,9 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>{{title}}</title>
+    <title>My Blog</title>
 </head>
 <body>
-    {{&content}}
+    {{#published}}
+
+        {{&htmlContent}}
+
+    {{/published}}
 </body>
 </html>
