@@ -12,6 +12,7 @@ var file = require('../lib/file'),
     path = require('path'),
     post = require('../lib/post'),
     render = require('../lib/render'),
+    lang = require('../lib/lang'),
     Showdown = require('showdown'),
     showdownConverter = new Showdown.converter(),
 
@@ -34,12 +35,16 @@ function getDateDir() {
 
 function publish(args) {
     var draftContents, postData, html, sluggedTitle, pubList,
+        truncatedPostData = {},
         metadata = {
             published: []
         },
         cwd = process.cwd(),
         draftPath = args[0],
         jsonPath = path.join(cwd, 'published.json'),
+        pubDate = new Date(),
+        postIsoDate = pubDate.toISOString(),
+        postTime = pubDate.getTime(),
         pubDir = path.join(cwd, 'published'),
         pubSrcDir = path.join(cwd, 'src-published'),
         dateDir = getDateDir(),
@@ -69,7 +74,9 @@ function publish(args) {
     file.mkdirs(pubPath);
     html = render.fromFile(path.join(cwd, 'templates', 'date', 'title', 'index.html'), {
         title: postData.title,
-        content: postData.htmlContent
+        content: postData.htmlContent,
+        postTime: postTime,
+        postIsoDate: postIsoDate
     });
     file.write(path.join(pubPath, 'index.html'), html);
 
@@ -79,8 +86,13 @@ function publish(args) {
         })) {
         metadata.published.unshift({
             title: postData.title,
-            path: shortPubPath
+            path: shortPubPath,
+            postTime: postTime,
+            postIsoDate: postIsoDate
         });
+
+        metadata.updatedTime = postTime;
+        metadata.updatedIsoDate = postIsoDate;
     }
     file.write(jsonPath, JSON.stringify(metadata, null, '  '));
 
@@ -97,22 +109,35 @@ function publish(args) {
     pubList = metadata.published.filter(function (item) {
         var postData,
             srcPath = path.join(cwd, 'src-published', item.path, 'index.md');
-console.log('CHECKING PATH: ' + srcPath);
+
         if (file.exists(srcPath)) {
             postData = post.fromFile(srcPath);
             item.content = postData.content;
             item.htmlContent = postData.htmlContent;
+            item.url = metadata.url + item.path + '/';
             return true;
+        } else {
+            console.log('WARNING: ' + srcPath + ' no longer exists. You ' +
+                        'may want to remove that from published.json');
         }
     });
 
-console.log('pubList: ' + pubList);
+    //Create an abbreviated, summary form of the metadata for use in
+    //summaries like home page and atom feed.
+    lang.mixin(truncatedPostData, metadata, true);
+    lang.mixin(truncatedPostData, {
+        published: pubList.slice(0, 4)
+    }, true);
 
     //Update the front page
-    html = render(file.read(path.join(cwd, 'templates', 'index.html')), {
-        published: pubList.slice(0, 4)
-    });
+    html = render(file.read(path.join(cwd, 'templates', 'index.html')),
+                  truncatedPostData);
     file.write(path.join(cwd, 'published', 'index.html'), html);
+
+    //Update the atom.xml feed
+    html = render(file.read(path.join(cwd, 'templates', 'atom.xml')),
+                  truncatedPostData);
+    file.write(path.join(cwd, 'published', 'atom.xml'), html);
 
     console.log('Published ' + draftPath + ' to ' + pubPath);
 }
