@@ -74,6 +74,7 @@ function publish(args) {
     file.mkdirs(pubPath);
     html = render.fromFile(path.join(cwd, 'templates', 'date', 'title', 'index.html'), {
         title: postData.title,
+        atomUrl: metadata.atomUrl,
         content: postData.htmlContent,
         postTime: postTime,
         postIsoDate: postIsoDate
@@ -114,6 +115,7 @@ function publish(args) {
             postData = post.fromFile(srcPath);
             item.content = postData.content;
             item.htmlContent = postData.htmlContent;
+            item.atomUrl = metadata.atomUrl;
             item.url = metadata.url + item.path + '/';
             return true;
         } else {
