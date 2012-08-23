@@ -9,7 +9,8 @@
 'use strict';
 
 var file = require('../lib/file'),
-    path = require('path');
+    path = require('path'),
+    ln = process.platform === 'win32' ? '\r\n' : '\n';
 
 function twoDigit(num) {
     if (num < 10) {
@@ -43,7 +44,7 @@ function draft(args) {
         process.exit(1);
     }
 
-    file.write(draftPath, 'tags: \n~\n\n# Title Goes Here');
+    file.write(draftPath, 'title: ' + ln + 'tags: ' + ln + '~' + ln + ln);
 
     console.log('Draft ' + draftPath + ' created.');
 }

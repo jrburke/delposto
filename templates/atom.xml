@@ -13,7 +13,7 @@
     {{#published}}
     <entry>
         <title type="html"><![CDATA[{{title}}]]></title>
-        <link href="{{url}}"/>
+        <link href="{{&url}}"/>
         <updated>{{postIsoDate}}</updated>
         <id>{{&url}}</id>
         <content type="html"><![CDATA[{{&htmlContent}}]]></content>

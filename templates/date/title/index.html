@@ -1,10 +1,26 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="utf-8">
+    <meta name="author" content="{{author}}">
+    <meta name="description" content="{{description}}">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <title>{{title}}</title>
+
+    <link rel="canonical" href="{{url}}">
+    <link href="../../favicon.png" rel="icon">
     <link href="{{&atomUrl}}" type="application/atom+xml" rel="alternate" title="ATOM Feed" />
+    <link href="../../css/index.css" rel="stylesheet" type="text/css">
 </head>
 <body>
+    <div class="header">
+        <h1><a href="/">{{blogTitle}}</a></h1>
+    </div>
+
+    <h1 class="postTitle">{{title}}</h1>
+    <div class="datetime" data-datetime="{{postIsoDate}}">{{postIsoDate}}</div>
+
     {{&content}}
 </body>
 </html>
