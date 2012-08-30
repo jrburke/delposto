@@ -75,8 +75,8 @@ function create(args) {
                 console.log(dir + ' created.');
                 console.log('cd to the directory then do `delposto draft` ' +
                             'to create a new draft in the "drafts" folder');
-                console.log('To edit the blog info, modify:');
-                console.log(path.join(dir, 'published.json'));
+                console.log('To edit the blog info, modify: ' +
+                            path.join(dir, 'published.json'));
             });
         });
     });

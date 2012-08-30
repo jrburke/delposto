@@ -4,7 +4,7 @@
  * see: http://github.com/jrburke/delposto for details
  */
 
-/*jslint node: true, nomen: true */
+/*jslint node: true, nomen: true, regexp: true */
 
 'use strict';
 
@@ -13,10 +13,19 @@ var file = require('../lib/file'),
     post = require('../lib/post'),
     render = require('../lib/render'),
     lang = require('../lib/lang'),
+    slug = require('slug'),
     Showdown = require('showdown'),
     showdownConverter = new Showdown.converter(),
 
-    pubSrcRegExp = /\bsrc-published\b/;
+    pubSrcRegExp = /\bsrc-published\b/,
+
+    //How many characters to use for the "description" of a
+    //post, which is just that set of characters from the
+    //markdown source of the post
+    descLimit = 256,
+
+    //How many posts to show on the home page and atom feeds
+    truncateLimit = 5;
 
 function twoDigit(num) {
     if (num < 10) {
@@ -33,12 +42,26 @@ function getDateDir() {
                            twoDigit(now.getDate()).toString()].join('');
 }
 
+function extractDescription(desc) {
+    desc = (desc || '').trim();
+    var text = /[^\r\n]*/.exec(desc);
+    text = text[0];
+
+    return text.length > descLimit ? text.substring(0, descLimit) + '...' :
+            text;
+}
+
 function publish(args) {
     var draftContents, postData, html, sluggedTitle, pubList,
         truncatedPostData = {},
         metadata = {
             published: []
         },
+        tags = {
+            unique: {},
+            list: []
+        },
+        tagViewData = [],
         cwd = process.cwd(),
         draftPath = args[0],
         jsonPath = path.join(cwd, 'published.json'),
@@ -50,7 +73,15 @@ function publish(args) {
         dateDir = getDateDir(),
         shortPubPath = dateDir + '/',
         pubPath = path.join(pubDir, dateDir),
-        pubSrcPath = path.join(pubSrcDir, dateDir);
+        pubSrcPath = path.join(pubSrcDir, dateDir),
+        postTemplate = file.read(path.join(cwd, 'templates', 'date', 'title',
+                       'index.html')),
+        tagSummaryTemplate = file.read(path.join(cwd, 'templates', 'tags',
+                            'index.html')),
+        tagIndexTemplate = file.read(path.join(cwd, 'templates', 'tags', 'name',
+                           'index.html')),
+        tagAtomTemplate = file.read(path.join(cwd, 'templates', 'tags',
+                           'name', 'atom.xml'));
 
     if (!file.exists(pubDir)) {
         console.log('This does not appear to be a delposto project. ' +
@@ -58,7 +89,7 @@ function publish(args) {
         process.exit(1);
     }
 
-    if (!draftPath || !file.exists(draftPath)) {
+    if (draftPath && !file.exists(draftPath)) {
         console.log(draftPath + ' does not exist');
         process.exit(1);
     }
@@ -67,56 +98,69 @@ function publish(args) {
         metadata = JSON.parse(file.read(jsonPath));
     }
 
-    postData = post.fromFile(draftPath);
+    if (draftPath) {
+        postData = post.fromFile(draftPath);
 
-    //Write out the post in HTML form.
-    pubPath = path.join(pubPath, postData.sluggedTitle);
-    file.mkdirs(pubPath);
-    html = render.fromFile(path.join(cwd, 'templates', 'date', 'title', 'index.html'), {
-        title: postData.title,
-        atomUrl: metadata.atomUrl,
-        content: postData.htmlContent,
-        postTime: postTime,
-        postIsoDate: postIsoDate
-    });
-    file.write(path.join(pubPath, 'index.html'), html);
+        shortPubPath += postData.sluggedTitle;
+        if (!metadata.published.some(function (item) {
+                return item.path === shortPubPath;
+            })) {
+            metadata.published.unshift({
+                title: postData.title,
+                path: shortPubPath,
+                postTime: postTime,
+                postIsoDate: postIsoDate
+            });
 
-    shortPubPath += postData.sluggedTitle;
-    if (!metadata.published.some(function (item) {
-            return item.path === shortPubPath;
-        })) {
-        metadata.published.unshift({
-            title: postData.title,
-            path: shortPubPath,
-            postTime: postTime,
-            postIsoDate: postIsoDate
-        });
+            metadata.updatedTime = postTime;
+            metadata.updatedIsoDate = postIsoDate;
+        }
+        file.write(jsonPath, JSON.stringify(metadata, null, '  '));
 
-        metadata.updatedTime = postTime;
-        metadata.updatedIsoDate = postIsoDate;
-    }
-    file.write(jsonPath, JSON.stringify(metadata, null, '  '));
-
-    //Move the .md file to published-src, but only if the source
-    //is not already in the published area
-    if (!pubSrcRegExp.test(draftPath)) {
-        pubSrcPath = path.join(pubSrcPath, postData.sluggedTitle);
-        file.mkdirs(pubSrcPath);
-        file.copyFile(draftPath, path.join(pubSrcPath, 'index.md'));
-        file.rm(draftPath);
+        //Move the .md file to published-src, but only if the source
+        //is not already in the published area
+        if (!pubSrcRegExp.test(draftPath)) {
+            pubSrcPath = path.join(pubSrcPath, postData.sluggedTitle);
+            file.mkdirs(pubSrcPath);
+            file.copyFile(draftPath, path.join(pubSrcPath, 'index.md'));
+            file.rm(draftPath);
+        }
     }
 
     //Load up all the posts to generate the front page and pages.
     pubList = metadata.published.filter(function (item) {
-        var postData,
+        var postData, description,
+            data = {},
             srcPath = path.join(cwd, 'src-published', item.path, 'index.md');
 
         if (file.exists(srcPath)) {
             postData = post.fromFile(srcPath);
-            item.content = postData.content;
-            item.htmlContent = postData.htmlContent;
+            lang.mixin(item, postData);
+
+            //Store off tags
+            if (postData.tags) {
+                postData.tags.forEach(function (tag) {
+                    if (!tags.unique[tag]) {
+                        tags.list.push(tag);
+                        tags.unique[tag] = [];
+                    }
+                    tags.unique[tag].push(item);
+                });
+            }
+
+            //Attach some data that is useful for templates
             item.atomUrl = metadata.atomUrl;
             item.url = metadata.url + item.path + '/';
+debugger;
+            item.description = extractDescription(postData.content);
+
+            //Write out the post in HTML form.
+            pubPath = path.join(pubPath, postData.sluggedTitle);
+            file.mkdirs(pubPath);
+            lang.mixin(data, item);
+            html = render(postTemplate, data);
+            file.write(path.join(pubPath, 'index.html'), html);
+
             return true;
         } else {
             console.log('WARNING: ' + srcPath + ' no longer exists. You ' +
@@ -124,24 +168,65 @@ function publish(args) {
         }
     });
 
+    //Use pubList for the metadata.published because it should only
+    //contain real, existing posts.
+    metadata.published = pubList;
+
     //Create an abbreviated, summary form of the metadata for use in
     //summaries like home page and atom feed.
     lang.mixin(truncatedPostData, metadata, true);
     lang.mixin(truncatedPostData, {
-        published: pubList.slice(0, 4)
+        published: pubList.slice(0, truncateLimit)
     }, true);
 
-    //Update the front page
+    //Generate the front page
     html = render(file.read(path.join(cwd, 'templates', 'index.html')),
                   truncatedPostData);
-    file.write(path.join(cwd, 'published', 'index.html'), html);
+    file.write(path.join(pubDir, 'index.html'), html);
 
-    //Update the atom.xml feed
+    //Generate the atom.xml feed
     html = render(file.read(path.join(cwd, 'templates', 'atom.xml')),
                   truncatedPostData);
-    file.write(path.join(cwd, 'published', 'atom.xml'), html);
+    file.write(path.join(pubDir, 'atom.xml'), html);
 
-    console.log('Published ' + draftPath + ' to ' + pubPath);
+    //Generate the archives page
+    html = render(file.read(path.join(cwd, 'templates', 'archive.html')),
+                  metadata);
+    file.write(path.join(pubDir, 'archive.html'), html);
+
+    //Generate the tag page/tag atom feed.
+    tags.list.sort();
+    tags.list.forEach(function (tag) {
+        var tagSlug = slug(tag),
+            tagPath = path.join(pubDir, 'tags', tagSlug),
+            published = tags.unique[tag],
+            tagData = {
+                tag: tag,
+                tagSlug: tagSlug,
+                tagUrl: tagSlug + '/',
+                published: published
+            };
+
+        //Save tag info for tag summary page.
+        tagViewData.push(tagData);
+
+        //Generate the tag's index and atom pages.
+        file.mkdirs(tagPath);
+        html = render(tagIndexTemplate, tagData);
+        file.write(path.join(tagPath, 'index.html'), html);
+
+        html = render(tagAtomTemplate, tagData);
+        file.write(path.join(tagPath, 'atom.xml'), html);
+    });
+
+    //Generate tag summary.
+    file.mkdirs(path.join(pubDir, 'tags'));
+    html = render(tagSummaryTemplate, tagViewData);
+    file.write(path.join(pubDir, 'tags', 'index.html'), html);
+
+    if (draftPath) {
+        console.log('Published ' + draftPath + ' to ' + pubPath);
+    }
 }
 
 publish.summary = 'Publishes a draft post in the "drafts" folder to ' +
