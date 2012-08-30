@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{title}} - Tagged {{title}}</title>
+    <link href="atom.xml" type="application/atom+xml" rel="alternate" title="ATOM Feed" />
+</head>
+<body class="tag">
+    <div class="header">
+        <h1><a href="/">{{title}}</a></h1>
+        <h2>Archives</h2>
+    </div>
+
+    <h2>{{tag}}</h2>
+
+    {{#published}}
+
+        <h3 class="postTitle"><a href="{{&url}}">{{title}}</a></h3>
+        <div class="datetime" data-datetime="{{postIsoDate}}">{{postIsoDate}}</div>
+        <div class="description">{{description}}</div>
+
+    {{/published}}
+</body>
+</html>

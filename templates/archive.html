@@ -4,7 +4,7 @@
     <title>{{title}}</title>
     <link href="{{&atomUrl}}" type="application/atom+xml" rel="alternate" title="ATOM Feed" />
 </head>
-<body>
+<body class="archive">
     <div class="header">
         <h1><a href="/">{{title}}</a></h1>
         <h2>Archives</h2>
@@ -12,7 +12,7 @@
 
     {{#published}}
 
-        <h1 class="postTitle">{{title}}</h1>
+        <h1 class="postTitle"><a href="{{&url}}">{{title}}</a></h1>
         <div class="datetime" data-datetime="{{postIsoDate}}">{{postIsoDate}}</div>
         <div class="description">{{description}}</div>
 

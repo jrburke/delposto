@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{title}} - Tags</title>
+</head>
+<body class="tags">
+    <div class="header">
+        <h1><a href="/">{{title}}</a></h1>
+    </div>
+
+    <h2>Tags</h2>
+
+    <ul>
+    {{#tags}}
+        <li><a href="{{&tagUrl}}">{{tag}}</a></li>
+    {{/tags}}
+    </ul>
+
+</body>
+</html>

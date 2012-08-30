@@ -61,7 +61,9 @@ function publish(args) {
             unique: {},
             list: []
         },
-        tagViewData = [],
+        tagSummaryData = {
+            tags: []
+        },
         cwd = process.cwd(),
         draftPath = args[0],
         jsonPath = path.join(cwd, 'published.json'),
@@ -74,6 +76,7 @@ function publish(args) {
         shortPubPath = dateDir + '/',
         pubPath = path.join(pubDir, dateDir),
         pubSrcPath = path.join(pubSrcDir, dateDir),
+        aboutTemplate = file.read(path.join(cwd, 'templates', 'about.html')),
         postTemplate = file.read(path.join(cwd, 'templates', 'date', 'title',
                        'index.html')),
         tagSummaryTemplate = file.read(path.join(cwd, 'templates', 'tags',
@@ -138,8 +141,8 @@ function publish(args) {
             lang.mixin(item, postData);
 
             //Store off tags
-            if (postData.tags) {
-                postData.tags.forEach(function (tag) {
+            if (postData.headers.tags) {
+                postData.headers.tags.forEach(function (tag) {
                     if (!tags.unique[tag]) {
                         tags.list.push(tag);
                         tags.unique[tag] = [];
@@ -151,7 +154,7 @@ function publish(args) {
             //Attach some data that is useful for templates
             item.atomUrl = metadata.atomUrl;
             item.url = metadata.url + item.path + '/';
-debugger;
+
             item.description = extractDescription(postData.content);
 
             //Write out the post in HTML form.
@@ -184,6 +187,10 @@ debugger;
                   truncatedPostData);
     file.write(path.join(pubDir, 'index.html'), html);
 
+    //the about page
+    html = render(aboutTemplate, truncatedPostData);
+    file.write(path.join(pubDir, 'about.html'), html);
+
     //Generate the atom.xml feed
     html = render(file.read(path.join(cwd, 'templates', 'atom.xml')),
                   truncatedPostData);
@@ -200,28 +207,38 @@ debugger;
         var tagSlug = slug(tag),
             tagPath = path.join(pubDir, 'tags', tagSlug),
             published = tags.unique[tag],
+            tagUrl = tagSlug + '/',
+            url = metadata.url + 'tags/' + tagUrl,
+            lastPost = published && published[0],
             tagData = {
                 tag: tag,
                 tagSlug: tagSlug,
-                tagUrl: tagSlug + '/',
+                tagUrl: tagUrl,
+                url: url,
+                atomUrl: url + 'atom.xml',
+                updatedIsoDate: lastPost.postIsoDate,
                 published: published
             };
 
         //Save tag info for tag summary page.
-        tagViewData.push(tagData);
+        tagSummaryData.tags.push(tagData);
 
-        //Generate the tag's index and atom pages.
+        //Tag's index.
         file.mkdirs(tagPath);
+        lang.mixin(tagData, metadata);
         html = render(tagIndexTemplate, tagData);
         file.write(path.join(tagPath, 'index.html'), html);
 
+        //Atom feed, limit to truncate limit
+        tagData.published = tagData.published.slice(0, truncateLimit);
         html = render(tagAtomTemplate, tagData);
         file.write(path.join(tagPath, 'atom.xml'), html);
     });
 
     //Generate tag summary.
     file.mkdirs(path.join(pubDir, 'tags'));
-    html = render(tagSummaryTemplate, tagViewData);
+    lang.mixin(tagSummaryData, metadata);
+    html = render(tagSummaryTemplate, tagSummaryData);
     file.write(path.join(pubDir, 'tags', 'index.html'), html);
 
     if (draftPath) {
