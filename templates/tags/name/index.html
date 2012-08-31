@@ -6,15 +6,14 @@
 </head>
 <body class="tag">
     <div class="header">
-        <h1><a href="/">{{title}}</a></h1>
-        <h2>Archives</h2>
+        <h1><a href="../../">{{title}}</a></h1>
     </div>
 
     <h2>{{tag}}</h2>
 
     {{#published}}
 
-        <h3 class="postTitle"><a href="{{&url}}">{{title}}</a></h3>
+        <h3 class="postTitle"><a href="../../{{&path}}/">{{title}}</a></h3>
         <div class="datetime" data-datetime="{{postIsoDate}}">{{postIsoDate}}</div>
         <div class="description">{{description}}</div>
 

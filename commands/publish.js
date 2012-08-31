@@ -132,7 +132,7 @@ function publish(args) {
 
     //Load up all the posts to generate the front page and pages.
     pubList = metadata.published.filter(function (item) {
-        var postData, description,
+        var postData, description, postPath,
             data = {},
             srcPath = path.join(cwd, 'src-published', item.path, 'index.md');
 
@@ -152,17 +152,18 @@ function publish(args) {
             }
 
             //Attach some data that is useful for templates
+            item.blogTitle = metadata.title;
             item.atomUrl = metadata.atomUrl;
             item.url = metadata.url + item.path + '/';
 
             item.description = extractDescription(postData.content);
 
             //Write out the post in HTML form.
-            pubPath = path.join(pubPath, postData.sluggedTitle);
-            file.mkdirs(pubPath);
+            postPath = path.join(pubDir, item.path);
+            file.mkdirs(postPath);
             lang.mixin(data, item);
             html = render(postTemplate, data);
-            file.write(path.join(pubPath, 'index.html'), html);
+            file.write(path.join(postPath, 'index.html'), html);
 
             return true;
         } else {
