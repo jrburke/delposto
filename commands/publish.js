@@ -52,8 +52,15 @@ function extractDescription(desc) {
             text;
 }
 
+function draftExists(draftPath) {
+    if (draftPath && !file.exists(draftPath)) {
+        console.log(draftPath + ' does not exist');
+        process.exit(1);
+    }
+}
+
 function publish(args) {
-    var draftContents, postData, html, sluggedTitle, pubList,
+    var draftContents, postData, html, sluggedTitle, pubList, draftDir,
         partials = {},
         truncatedPostData = {},
         metadata = {
@@ -99,10 +106,7 @@ function publish(args) {
         process.exit(1);
     }
 
-    if (draftPath && !file.exists(draftPath)) {
-        console.log(draftPath + ' does not exist');
-        process.exit(1);
-    }
+    draftExists(draftPath);
 
     if (file.exists(jsonPath)) {
         metadata = JSON.parse(file.read(jsonPath));
@@ -115,6 +119,13 @@ function publish(args) {
     });
 
     if (draftPath) {
+        //Figure out if a directory for a draft is in play.
+        if (fs.statSync(draftPath).isDirectory()) {
+            draftDir = draftPath.replace(/[\/\\]$/, '');
+            draftPath = path.join(draftDir, 'index.md');
+            draftExists(draftPath);
+        }
+
         postData = post.fromFile(draftPath);
 
         shortPubPath += postData.sluggedTitle;
@@ -138,8 +149,11 @@ function publish(args) {
         if (!pubSrcRegExp.test(draftPath)) {
             pubSrcPath = path.join(pubSrcPath, postData.sluggedTitle);
             file.mkdirs(pubSrcPath);
+            if (draftDir) {
+                file.copyDir(draftDir, pubSrcPath);
+            }
             file.copyFile(draftPath, path.join(pubSrcPath, 'index.md'));
-            file.rm(draftPath);
+            file.rm(draftDir || draftPath);
         }
     }
 
@@ -147,7 +161,8 @@ function publish(args) {
     pubList = metadata.published.filter(function (item) {
         var postData, description, postPath,
             data = {},
-            srcPath = path.join(cwd, 'src-published', item.path, 'index.md');
+            srcDir = path.join(cwd, 'src-published', item.path),
+            srcPath = path.join(srcDir, 'index.md');
 
         if (file.exists(srcPath)) {
             postData = post.fromFile(srcPath);
@@ -171,9 +186,13 @@ function publish(args) {
 
             item.description = extractDescription(postData.content);
 
-            //Write out the post in HTML form.
             postPath = path.join(pubDir, item.path);
             file.mkdirs(postPath);
+
+            //Copy all the files over, except index.md
+            file.copyDir(srcDir, postPath, null, null, /index\.md/);
+
+            //Write out the post in HTML form.
             lang.mixin(data, item);
             data.rootPath = '../..';
             html = render(postTemplate, data);
