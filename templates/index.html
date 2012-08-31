@@ -15,6 +15,11 @@
         </div>
     </div>
 
+    <ul class="tags">
+        {{#tags}}
+            <li>{{tag}}</li>
+        {{/tags}}
+    </ul>
     {{#published}}
 
         <h1 class="postTitle"><a href="{{&path}}/">{{title}}</a></h1>

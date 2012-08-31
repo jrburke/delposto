@@ -183,27 +183,6 @@ function publish(args) {
         published: pubList.slice(0, truncateLimit)
     }, true);
 
-    //Generate the front page
-    html = render(file.read(path.join(cwd, 'templates', 'index.html')),
-                  truncatedPostData);
-    file.write(path.join(pubDir, 'index.html'), html);
-
-    //the about page
-    html = render(aboutTemplate, truncatedPostData);
-    file.mkdirs(path.join(pubDir, 'about'));
-    file.write(path.join(pubDir, 'about', 'index.html'), html);
-
-    //Generate the atom.xml feed
-    html = render(file.read(path.join(cwd, 'templates', 'atom.xml')),
-                  truncatedPostData);
-    file.write(path.join(pubDir, 'atom.xml'), html);
-
-    //Generate the archives page
-    html = render(file.read(path.join(cwd, 'templates', 'archives', 'index.html')),
-                  metadata);
-    file.mkdirs(path.join(pubDir, 'archives'));
-    file.write(path.join(pubDir, 'archives', 'index.html'), html);
-
     //Generate the tag page/tag atom feed.
     tags.list.sort();
     tags.list.forEach(function (tag) {
@@ -243,6 +222,31 @@ function publish(args) {
     lang.mixin(tagSummaryData, metadata);
     html = render(tagSummaryTemplate, tagSummaryData);
     file.write(path.join(pubDir, 'tags', 'index.html'), html);
+
+    //Hold on to the tag summary data for use on top level pages.
+    truncatedPostData.tags = tagSummaryData.tags;
+    metadata.tags = tagSummaryData.tags;
+
+    //Generate the front page
+    html = render(file.read(path.join(cwd, 'templates', 'index.html')),
+                  truncatedPostData);
+    file.write(path.join(pubDir, 'index.html'), html);
+
+    //the about page
+    html = render(aboutTemplate, truncatedPostData);
+    file.mkdirs(path.join(pubDir, 'about'));
+    file.write(path.join(pubDir, 'about', 'index.html'), html);
+
+    //Generate the atom.xml feed
+    html = render(file.read(path.join(cwd, 'templates', 'atom.xml')),
+                  truncatedPostData);
+    file.write(path.join(pubDir, 'atom.xml'), html);
+
+    //Generate the archives page
+    html = render(file.read(path.join(cwd, 'templates', 'archives', 'index.html')),
+                  metadata);
+    file.mkdirs(path.join(pubDir, 'archives'));
+    file.write(path.join(pubDir, 'archives', 'index.html'), html);
 
     if (draftPath) {
         console.log('Published ' + draftPath + ' to ' + pubPath);
