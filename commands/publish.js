@@ -76,7 +76,7 @@ function publish(args) {
         shortPubPath = dateDir + '/',
         pubPath = path.join(pubDir, dateDir),
         pubSrcPath = path.join(pubSrcDir, dateDir),
-        aboutTemplate = file.read(path.join(cwd, 'templates', 'about.html')),
+        aboutTemplate = file.read(path.join(cwd, 'templates', 'about', 'index.html')),
         postTemplate = file.read(path.join(cwd, 'templates', 'date', 'title',
                        'index.html')),
         tagSummaryTemplate = file.read(path.join(cwd, 'templates', 'tags',
@@ -190,7 +190,8 @@ function publish(args) {
 
     //the about page
     html = render(aboutTemplate, truncatedPostData);
-    file.write(path.join(pubDir, 'about.html'), html);
+    file.mkdirs(path.join(pubDir, 'about'));
+    file.write(path.join(pubDir, 'about', 'index.html'), html);
 
     //Generate the atom.xml feed
     html = render(file.read(path.join(cwd, 'templates', 'atom.xml')),
@@ -198,9 +199,10 @@ function publish(args) {
     file.write(path.join(pubDir, 'atom.xml'), html);
 
     //Generate the archives page
-    html = render(file.read(path.join(cwd, 'templates', 'archive.html')),
+    html = render(file.read(path.join(cwd, 'templates', 'archives', 'index.html')),
                   metadata);
-    file.write(path.join(pubDir, 'archive.html'), html);
+    file.mkdirs(path.join(pubDir, 'archives'));
+    file.write(path.join(pubDir, 'archives', 'index.html'), html);
 
     //Generate the tag page/tag atom feed.
     tags.list.sort();
