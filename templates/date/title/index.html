@@ -17,8 +17,12 @@
     {{> header}}
 
     <h1 class="postTitle">{{title}}</h1>
-    <div class="datetime" data-datetime="{{postIsoDate}}">{{postIsoDate}}</div>
+    <div class="datetime" data-datetime="{{postIsoDate}}">{{postDateString}}</div>
 
     {{&htmlContent}}
+
+    {{#headers.comments}}
+    <a href="{{&headers.comments}}">View Comments</a>
+    {{/headers.comments}}
 </body>
 </html>

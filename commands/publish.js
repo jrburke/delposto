@@ -59,6 +59,11 @@ function draftExists(draftPath) {
     }
 }
 
+function getDomain(url) {
+    //Extracts the domain from an url.
+    return url.substring(url.indexOf('//') + 2).split('/').shift();
+}
+
 function publish(args) {
     var draftContents, postData, html, sluggedTitle, pubList, draftDir,
         partials = {},
@@ -78,6 +83,7 @@ function publish(args) {
         jsonPath = path.join(cwd, 'published.json'),
         pubDate = new Date(),
         postIsoDate = pubDate.toISOString(),
+        postDateString = pubDate.toUTCString(),
         postTime = pubDate.getTime(),
         pubDir = path.join(cwd, 'published'),
         pubSrcDir = path.join(cwd, 'src-published'),
@@ -111,6 +117,7 @@ function publish(args) {
     if (file.exists(jsonPath)) {
         metadata = JSON.parse(file.read(jsonPath));
         metadata.blogTitle = metadata.title;
+        metadata.blogDomain = getDomain(metadata.url);
     }
 
     //Load partials
@@ -183,6 +190,7 @@ function publish(args) {
             item.blogTitle = metadata.title;
             item.atomUrl = metadata.atomUrl;
             item.url = metadata.url + item.path + '/';
+            item.postDateString = (new Date(item.postTime)).toUTCString();
 
             item.description = extractDescription(postData.content);
 

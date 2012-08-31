@@ -44,7 +44,10 @@ function draft(args) {
         process.exit(1);
     }
 
-    file.write(draftPath, 'title: ' + ln + 'tags: ' + ln + '~' + ln + ln);
+    file.write(draftPath, 'title: ' + ln +
+                          'tags: ' + ln +
+                          'comments: ' + ln +
+                          '~' + ln + ln);
 
     console.log('Draft ' + draftPath + ' created.');
 }
