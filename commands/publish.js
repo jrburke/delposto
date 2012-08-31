@@ -10,8 +10,9 @@
 
 var file = require('../lib/file'),
     path = require('path'),
+    fs = require('fs'),
     post = require('../lib/post'),
-    render = require('../lib/render'),
+    libRender = require('../lib/render'),
     lang = require('../lib/lang'),
     slug = require('slug'),
     Showdown = require('showdown'),
@@ -53,6 +54,7 @@ function extractDescription(desc) {
 
 function publish(args) {
     var draftContents, postData, html, sluggedTitle, pubList,
+        partials = {},
         truncatedPostData = {},
         metadata = {
             published: []
@@ -76,6 +78,7 @@ function publish(args) {
         shortPubPath = dateDir + '/',
         pubPath = path.join(pubDir, dateDir),
         pubSrcPath = path.join(pubSrcDir, dateDir),
+        partialTemplatePath = path.join(cwd, 'templates', 'partials'),
         aboutTemplate = file.read(path.join(cwd, 'templates', 'about', 'index.html')),
         postTemplate = file.read(path.join(cwd, 'templates', 'date', 'title',
                        'index.html')),
@@ -85,6 +88,10 @@ function publish(args) {
                            'index.html')),
         tagAtomTemplate = file.read(path.join(cwd, 'templates', 'tags',
                            'name', 'atom.xml'));
+
+    function render(template, data) {
+        return libRender(template, data, partials);
+    }
 
     if (!file.exists(pubDir)) {
         console.log('This does not appear to be a delposto project. ' +
@@ -99,7 +106,13 @@ function publish(args) {
 
     if (file.exists(jsonPath)) {
         metadata = JSON.parse(file.read(jsonPath));
+        metadata.blogTitle = metadata.title;
     }
+
+    //Load partials
+    fs.readdirSync(partialTemplatePath).forEach(function (fileName) {
+        partials[path.basename(fileName, path.extname(fileName))] = file.read(path.join(partialTemplatePath, fileName));
+    });
 
     if (draftPath) {
         postData = post.fromFile(draftPath);
@@ -162,6 +175,7 @@ function publish(args) {
             postPath = path.join(pubDir, item.path);
             file.mkdirs(postPath);
             lang.mixin(data, item);
+            data.rootPath = '../..';
             html = render(postTemplate, data);
             file.write(path.join(postPath, 'index.html'), html);
 
@@ -208,6 +222,7 @@ function publish(args) {
         //Tag's index.
         file.mkdirs(tagPath);
         lang.mixin(tagData, metadata);
+        tagData.rootPath = '../..';
         html = render(tagIndexTemplate, tagData);
         file.write(path.join(tagPath, 'index.html'), html);
 
@@ -220,6 +235,7 @@ function publish(args) {
     //Generate tag summary.
     file.mkdirs(path.join(pubDir, 'tags'));
     lang.mixin(tagSummaryData, metadata);
+    tagSummaryData.rootPath = '..';
     html = render(tagSummaryTemplate, tagSummaryData);
     file.write(path.join(pubDir, 'tags', 'index.html'), html);
 
@@ -228,11 +244,13 @@ function publish(args) {
     metadata.tags = tagSummaryData.tags;
 
     //Generate the front page
+    truncatedPostData.rootPath = '.';
     html = render(file.read(path.join(cwd, 'templates', 'index.html')),
                   truncatedPostData);
     file.write(path.join(pubDir, 'index.html'), html);
 
     //the about page
+    truncatedPostData.rootPath = '..';
     html = render(aboutTemplate, truncatedPostData);
     file.mkdirs(path.join(pubDir, 'about'));
     file.write(path.join(pubDir, 'about', 'index.html'), html);
@@ -243,6 +261,7 @@ function publish(args) {
     file.write(path.join(pubDir, 'atom.xml'), html);
 
     //Generate the archives page
+    metadata.rootPath = '..';
     html = render(file.read(path.join(cwd, 'templates', 'archives', 'index.html')),
                   metadata);
     file.mkdirs(path.join(pubDir, 'archives'));
