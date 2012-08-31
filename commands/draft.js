@@ -10,7 +10,8 @@
 
 var file = require('../lib/file'),
     path = require('path'),
-    ln = process.platform === 'win32' ? '\r\n' : '\n';
+    ln = process.platform === 'win32' ? '\r\n' : '\n',
+    dirRegExp = /[\\\/]$/;
 
 function twoDigit(num) {
     if (num < 10) {
@@ -27,10 +28,19 @@ function tempName() {
 }
 
 function draft(args) {
-    var name = (args[0] || tempName()) + '.md',
+    var draftPath, dir,
+        name = (args[0] || tempName()),
         cwd = process.cwd(),
-        draftsDir = path.join(cwd, 'drafts'),
-        draftPath = path.join(draftsDir, name);
+        draftsDir = path.join(cwd, 'drafts');
+
+    if (dirRegExp.test(name)) {
+        //Wants a directory, for storing support files for the post.
+        name = path.join(name.substring(0, name.length - 1), 'index.md');
+    } else {
+        name += '.md';
+    }
+
+    draftPath = path.join(draftsDir, name);
 
     if (!file.exists(draftsDir)) {
         console.log('This does not appear to be a delposto project. ' +
@@ -44,8 +54,13 @@ function draft(args) {
         process.exit(1);
     }
 
+    dir = path.dirname(draftPath);
+    if (!file.exists(dir)) {
+        file.mkdirs(dir);
+    }
+
     file.write(draftPath, 'title: ' + ln +
-                          'tags: ' + ln +
+                          'tags: []' + ln +
                           'comments: ' + ln +
                           '~' + ln + ln);
 
