@@ -1,0 +1,89 @@
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    padding: 0;
+    margin: 0;
+    font-family: "adelle",serif;
+    color: #222222;
+    background-color: white;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: "ratio-display",sans-serif;
+    font-weight: normal;
+}
+
+h1 a,
+h2 a,
+h3 a,
+h4 a,
+h5 a,
+h6 a {
+    color: #221009;
+}
+
+a {
+    text-decoration: none;
+    color: #a63c00;
+}
+
+a:hover {
+    text-decoration: underline;
+    color: #6c2700;
+}
+
+.header {
+    position: relative;
+    padding: 2em 0.2em;
+    background-color: #221009;
+    color: white;
+}
+
+.header h1 {
+    margin: 0;
+    color: white;
+    background-color: #221009;
+}
+
+.header h1 a {
+    color: white;
+}
+
+.header .nav {
+    position: absolute;
+    top: 0.2em;
+    right: 0.2em;
+    text-align: right;
+}
+
+.header .nav a {
+    display: block;
+}
+
+.postHeader {
+    position: relative;
+    padding: 1.2em 0;
+    background-color: #699476;
+    font-family: "ratio-display",sans-serif;
+}
+
+.postHeader h1 {
+    margin: 0 1em 0 1em;
+    color: white;
+    text-shadow: 0 1px #221009;
+}
+
+.postHeader .datetime {
+    position: absolute;
+    bottom: .2em;
+    right: .2em;
+    color: #e0e0e0;
+    font-size: smaller;
+}
+
+/* Page specific styles */
+.post .postTitle {
+   ;
+}

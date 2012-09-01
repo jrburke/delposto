@@ -4,22 +4,24 @@
     <meta charset="utf-8">
     <meta name="author" content="{{author}}">
     <meta name="description" content="{{description}}">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <title>{{title}}</title>
 
     <link rel="canonical" href="{{&url}}">
-    <link href="../../favicon.png" rel="icon">
     <link href="{{&atomUrl}}" type="application/atom+xml" rel="alternate" title="ATOM Feed" />
-    <link href="../../css/index.css" rel="stylesheet" type="text/css">
+    {{> head}}
 </head>
 <body class="post">
     {{> header}}
 
-    <h1 class="postTitle">{{title}}</h1>
-    <div class="datetime" data-datetime="{{postIsoDate}}">{{postDateString}}</div>
+    <div class="postHeader">
+        <h1 class="postTitle">{{title}}</h1>
+        <div class="datetime" data-datetime="{{postIsoDate}}">{{postDateString}}</div>
+    </div>
 
-    {{&htmlContent}}
+    <div class="postContent">
+        {{&htmlContent}}
+    </div>
 
     {{#headers.comments}}
     <a href="{{&headers.comments}}">View Comments</a>

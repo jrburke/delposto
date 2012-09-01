@@ -3,22 +3,23 @@
 <head>
     <title>{{title}}</title>
     <link href="{{&atomUrl}}" type="application/atom+xml" rel="alternate" title="ATOM Feed" />
+    {{> head}}
 </head>
 <body class="index">
     {{> header}}
 
-    <ul class="tags">
-        {{#tags}}
-            <li>{{tag}}</li>
-        {{/tags}}
-    </ul>
     {{#published}}
-
-        <h1 class="postTitle"><a href="{{&path}}/">{{title}}</a></h1>
-        <div class="datetime" data-datetime="{{postIsoDate}}">{{postDateString}}</div>
-
-        {{&htmlContent}}
-
+    <div class="postSection">
+        <div class="postHeader">
+            <h2 class="postTitle"><a href="{{&path}}/">{{title}}</a></h2>
+            <div class="datetime" data-datetime="{{postIsoDate}}">
+                {{postDateString}}
+            </div>
+        </div>
+        <div class="postContent">
+            {{&htmlContent}}
+        </div>
+    </div>
     {{/published}}
 </body>
 </html>

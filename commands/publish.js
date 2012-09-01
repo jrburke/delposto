@@ -250,6 +250,7 @@ function publish(args) {
         file.mkdirs(tagPath);
         lang.mixin(tagData, metadata);
         tagData.rootPath = '../..';
+        tagData.atomUrl = url + '/atom.xml';
         html = render(tagIndexTemplate, tagData);
         file.write(path.join(tagPath, 'index.html'), html);
 
@@ -293,6 +294,11 @@ function publish(args) {
                   metadata);
     file.mkdirs(path.join(pubDir, 'archives'));
     file.write(path.join(pubDir, 'archives', 'index.html'), html);
+
+    //Copy over any other directories needed to run.
+    ['img', 'js', 'css'].forEach(function (name) {
+        file.copyDir(path.join(cwd, 'templates', name), path.join(pubDir, name));
+    });
 
     if (draftPath) {
         console.log('Published ' + draftPath + ' to ' + pubPath);
