@@ -6,17 +6,23 @@
     {{> head}}
 </head>
 <body class="archive">
-    <div class="header">
-        <h1><a href="../">{{title}}</a></h1>
-        <h2>Archives</h2>
-    </div>
+    {{> header}}
 
-    {{#published}}
+    <div class="section">
+        <div class="sectionHeader">
+             <h1>Archives</h1>
+         </div>
+         <div class="sectionContent">
+        {{#published}}
 
-        <h1 class="postTitle"><a href="../{{&path}}/">{{title}}</a></h1>
-        <div class="datetime" data-datetime="{{postIsoDate}}">{{postDateString}}</div>
-        <div class="description">{{description}}</div>
+            <div class="summary">
+                <h2 class="postTitle"><a href="../{{&path}}/">{{title}}</a></h2>
+                <div class="datetime" data-datetime="{{postIsoDate}}">~ {{postDateString}}</div>
+            </div>
+            <div class="description">{{description}}</div>
 
-    {{/published}}
+        {{/published}}
+         </div>
+     </div>
 </body>
 </html>

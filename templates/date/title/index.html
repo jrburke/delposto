@@ -14,17 +14,20 @@
 <body class="post">
     {{> header}}
 
-    <div class="postHeader">
+    <div class="sectionHeader">
         <h1 class="postTitle">{{title}}</h1>
         <div class="datetime" data-datetime="{{postIsoDate}}">{{postDateString}}</div>
     </div>
 
-    <div class="postContent">
+    <div class="sectionContent">
         {{&htmlContent}}
+
+        {{#headers.comments}}
+        <div class="separator">~</div>
+        <a href="{{&headers.comments}}">View Comments</a>
+        {{/headers.comments}}
     </div>
 
-    {{#headers.comments}}
-    <a href="{{&headers.comments}}">View Comments</a>
-    {{/headers.comments}}
+
 </body>
 </html>

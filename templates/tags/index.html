@@ -7,13 +7,18 @@
 <body class="tags">
     {{> header}}
 
-    <h2>Tags</h2>
-
-    <ul>
-    {{#tags}}
-        <li><a href="{{&tagUrl}}">{{tag}}</a></li>
-    {{/tags}}
-    </ul>
+    <div class="section">
+        <div class="sectionHeader">
+             <h1>Tags</h1>
+        </div>
+        <div class="sectionContent">
+            <ul>
+            {{#tags}}
+                <li><a href="{{&tagUrl}}">{{tag}}</a></li>
+            {{/tags}}
+            </ul>
+        </div>
+    </div>
 
 </body>
 </html>

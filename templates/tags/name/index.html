@@ -8,14 +8,21 @@
 <body class="tag">
     {{> header}}
 
-    <h2>{{tag}}</h2>
+    <div class="section">
+        <div class="sectionHeader">
+             <h1>tag ~ {{tag}}</h1>
+         </div>
+         <div class="sectionContent">
+        {{#published}}
 
-    {{#published}}
+            <div class="summary">
+                <h2><a href="../../{{&path}}/">{{title}}</a></h2>
+                <div class="datetime" data-datetime="{{postIsoDate}}">~ {{postDateString}}</div>
+            </div>
+            <div class="description">{{description}}</div>
 
-        <h3 class="postTitle"><a href="../../{{&path}}/">{{title}}</a></h3>
-        <div class="datetime" data-datetime="{{postIsoDate}}">{{postDateString}}</div>
-        <div class="description">{{description}}</div>
-
-    {{/published}}
+        {{/published}}
+         </div>
+     </div>
 </body>
 </html>

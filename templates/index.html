@@ -9,14 +9,14 @@
     {{> header}}
 
     {{#published}}
-    <div class="postSection">
-        <div class="postHeader">
-            <h2 class="postTitle"><a href="{{&path}}/">{{title}}</a></h2>
+    <div class="section">
+        <div class="sectionHeader">
+            <h1 class="postTitle"><a href="{{&path}}/">{{title}}</a></h1>
             <div class="datetime" data-datetime="{{postIsoDate}}">
                 {{postDateString}}
             </div>
         </div>
-        <div class="postContent">
+        <div class="sectionContent">
             {{&htmlContent}}
         </div>
     </div>

@@ -5,13 +5,13 @@
 html, body {
     padding: 0;
     margin: 0;
-    font-family: "adelle",serif;
+    font-family: "adelle",Georgia,serif;
     color: #222222;
     background-color: white;
 }
 
 h1, h2, h3, h4, h5, h6 {
-    font-family: "ratio-display",sans-serif;
+    font-family: "ratio-display",verdana,sans-serif;
     font-weight: normal;
 }
 
@@ -42,48 +42,103 @@ a:hover {
 }
 
 .header h1 {
-    margin: 0;
+    margin: 0 0 0 1em;
     color: white;
     background-color: #221009;
 }
 
-.header h1 a {
+.header h1:before {
+    content: "<t> ";
+    color: #699476;
+}
+
+h1 a {
     color: white;
 }
 
 .header .nav {
     position: absolute;
-    top: 0.2em;
-    right: 0.2em;
+    top: 0.5em;
+    right: 0.5em;
     text-align: right;
+    font-size: smaller;
 }
 
 .header .nav a {
     display: block;
 }
 
-.postHeader {
+.sectionHeader {
     position: relative;
     padding: 1.2em 0;
     background-color: #699476;
-    font-family: "ratio-display",sans-serif;
+    font-family: "ratio-display",verdana,sans-serif;
 }
 
-.postHeader h1 {
-    margin: 0 1em 0 1em;
+.sectionHeader h1 {
+    margin: 0 1em 0 1.9em;
     color: white;
     text-shadow: 0 1px #221009;
+    text-transform: lowercase;
 }
 
-.postHeader .datetime {
+.sectionHeader h1:before {
+    content: "> ";
+    color: #221009;
+}
+
+.sectionHeader .datetime {
     position: absolute;
-    bottom: .2em;
-    right: .2em;
-    color: #e0e0e0;
+    bottom: 0.5em;
+    right: 0.5em;
+    color: #a0baa8;
     font-size: smaller;
 }
 
-/* Page specific styles */
-.post .postTitle {
-   ;
+.sectionContent {
+    margin: 2em 5.2em;
+}
+
+.summary {
+    margin: 2em 0 0 0;
+}
+
+.summary h2,
+.summary .datetime {
+    display: inline;
+}
+
+.summary h2 a {
+    color: #a63c00;
+}
+
+.summary .datetime {
+    color: gray;
+    font-size: smaller;
+}
+
+.separator {
+    margin: 0 0 1em 0;
+    color: gray;
+}
+
+/* media queries */
+
+@media (max-width: 480px) {
+
+    .header h1 {
+        margin: 0 0 0 0.2em;
+    }
+
+    .sectionHeader h1 {
+        margin: 0 0.2em;
+    }
+
+    .extendedTitle {
+        display: none;
+    }
+
+    .sectionContent {
+        margin: 0 0.5em;
+    }
 }
