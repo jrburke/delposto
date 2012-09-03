@@ -69,14 +69,14 @@ function create(args) {
                 file.copyDir(path.join(__dirname, '..', 'templates'),
                              path.join(dir, 'templates'));
 
-                file.write(path.join(dir, 'published.json'),
+                file.write(path.join(dir, 'meta.json'),
                            JSON.stringify(pubData, null, '  '));
 
                 console.log(dir + ' created.');
                 console.log('cd to the directory then do `delposto draft` ' +
                             'to create a new draft in the "drafts" folder');
                 console.log('To edit the blog info, modify: ' +
-                            path.join(dir, 'published.json'));
+                            path.join(dir, 'meta.json'));
             });
         });
     });

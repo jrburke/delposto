@@ -12,10 +12,13 @@ var file = require('../lib/file'),
     path = require('path'),
     fs = require('fs'),
     post = require('../lib/post'),
-    libRender = require('../lib/render'),
+    render = require('../lib/render'),
     lang = require('../lib/lang'),
     slug = require('slug'),
     Showdown = require('showdown'),
+    dirs = require('../lib/dirs'),
+    meta = require('../lib/meta')(),
+    templates = require('../lib/templates')(),
     showdownConverter = new Showdown.converter(),
 
     pubSrcRegExp = /\bsrc-published\b/,
@@ -59,18 +62,22 @@ function draftExists(draftPath) {
     }
 }
 
-function getDomain(url) {
-    //Extracts the domain from an url.
-    return url.substring(url.indexOf('//') + 2).split('/').shift();
+function convert(template, data, outPath, rootPath) {
+    if (rootPath) {
+        data.rootPath = rootPath;
+    }
+    var html = render(template, data);
+    file.write(outPath, html);
+}
+
+//Generate a directory in the published area.
+function pdir() {
+    return path.join.apply(path, [dirs.published].concat(arguments));
 }
 
 function publish(args) {
-    var draftContents, postData, html, sluggedTitle, pubList, draftDir,
-        partials = {},
+    var draftContents, postData, html, sluggedTitle, pubList, draftDir, data,
         truncatedPostData = {},
-        metadata = {
-            published: []
-        },
         tags = {
             unique: {},
             list: []
@@ -80,50 +87,17 @@ function publish(args) {
         },
         cwd = process.cwd(),
         draftPath = args[0],
-        jsonPath = path.join(cwd, 'published.json'),
         pubDate = new Date(),
         postIsoDate = pubDate.toISOString(),
         postDateString = pubDate.toUTCString(),
         postTime = pubDate.getTime(),
-        pubDir = path.join(cwd, 'published'),
-        pubSrcDir = path.join(cwd, 'src-published'),
         dateDir = getDateDir(),
         shortPubPath = dateDir + '/',
-        pubPath = path.join(pubDir, dateDir),
-        pubSrcPath = path.join(pubSrcDir, dateDir),
-        partialTemplatePath = path.join(cwd, 'templates', 'partials'),
-        aboutTemplate = file.read(path.join(cwd, 'templates', 'about', 'index.html')),
-        postTemplate = file.read(path.join(cwd, 'templates', 'date', 'title',
-                       'index.html')),
-        tagSummaryTemplate = file.read(path.join(cwd, 'templates', 'tags',
-                            'index.html')),
-        tagIndexTemplate = file.read(path.join(cwd, 'templates', 'tags', 'name',
-                           'index.html')),
-        tagAtomTemplate = file.read(path.join(cwd, 'templates', 'tags',
-                           'name', 'atom.xml'));
-
-    function render(template, data) {
-        return libRender(template, data, partials);
-    }
-
-    if (!file.exists(pubDir)) {
-        console.log('This does not appear to be a delposto project. ' +
-                    'Expected a "published" folder.');
-        process.exit(1);
-    }
+        pubDir = dirs.published,
+        pubPath = pdir(dateDir),
+        srcPubPath = path.join(dirs.srcPublished, dateDir);
 
     draftExists(draftPath);
-
-    if (file.exists(jsonPath)) {
-        metadata = JSON.parse(file.read(jsonPath));
-        metadata.blogTitle = metadata.title;
-        metadata.blogDomain = getDomain(metadata.url);
-    }
-
-    //Load partials
-    fs.readdirSync(partialTemplatePath).forEach(function (fileName) {
-        partials[path.basename(fileName, path.extname(fileName))] = file.read(path.join(partialTemplatePath, fileName));
-    });
 
     if (draftPath) {
         //Figure out if a directory for a draft is in play.
@@ -136,44 +110,44 @@ function publish(args) {
         postData = post.fromFile(draftPath);
 
         shortPubPath += postData.sluggedTitle;
-        if (!metadata.published.some(function (item) {
+        if (!meta.published.some(function (item) {
                 return item.path === shortPubPath;
             })) {
-            metadata.published.unshift({
+            meta.published.unshift({
                 title: postData.title,
                 path: shortPubPath,
                 postTime: postTime,
                 postIsoDate: postIsoDate
             });
 
-            metadata.updatedTime = postTime;
-            metadata.updatedIsoDate = postIsoDate;
+            meta.updatedTime = postTime;
+            meta.updatedIsoDate = postIsoDate;
         }
-        file.write(jsonPath, JSON.stringify(metadata, null, '  '));
+
+        meta.save();
 
         //Move the .md file to published-src, but only if the source
         //is not already in the published area
         if (!pubSrcRegExp.test(draftPath)) {
-            pubSrcPath = path.join(pubSrcPath, postData.sluggedTitle);
-            file.mkdirs(pubSrcPath);
+            srcPubPath = path.join(srcPubPath, postData.sluggedTitle);
+            file.mkdirs(srcPubPath);
             if (draftDir) {
-                file.copyDir(draftDir, pubSrcPath);
+                file.copyDir(draftDir, srcPubPath);
             }
-            file.copyFile(draftPath, path.join(pubSrcPath, 'index.md'));
+            file.copyFile(draftPath, path.join(srcPubPath, 'index.md'));
             file.rm(draftDir || draftPath);
         }
     }
 
     //Load up all the posts to generate the front page and pages.
-    pubList = metadata.published.filter(function (item) {
-        var postData, description, postPath,
-            data = {},
-            srcDir = path.join(cwd, 'src-published', item.path),
+    pubList = meta.published.filter(function (item) {
+        var srcDir = path.join(dirs.srcPublished, item.path),
             srcPath = path.join(srcDir, 'index.md');
 
         if (file.exists(srcPath)) {
+            publish.renderPost(path.join(dirs.srcPublished, item.path), item);
+
             postData = post.fromFile(srcPath);
-            lang.mixin(item, postData);
 
             //Store off tags
             if (postData.headers.tags) {
@@ -186,40 +160,20 @@ function publish(args) {
                 });
             }
 
-            //Attach some data that is useful for templates
-            item.blogTitle = metadata.title;
-            item.atomUrl = metadata.atomUrl;
-            item.url = metadata.url + item.path + '/';
-            item.postDateString = (new Date(item.postTime)).toUTCString();
-
-            item.description = extractDescription(postData.content);
-
-            postPath = path.join(pubDir, item.path);
-            file.mkdirs(postPath);
-
-            //Copy all the files over, except index.md
-            file.copyDir(srcDir, postPath, null, null, /index\.md/);
-
-            //Write out the post in HTML form.
-            lang.mixin(data, item);
-            data.rootPath = '../..';
-            html = render(postTemplate, data);
-            file.write(path.join(postPath, 'index.html'), html);
-
             return true;
         } else {
             console.log('WARNING: ' + srcPath + ' no longer exists. You ' +
-                        'may want to remove that from published.json');
+                        'may want to remove that from meta.json');
         }
     });
 
-    //Use pubList for the metadata.published because it should only
+    //Use pubList for the meta.published because it should only
     //contain real, existing posts.
-    metadata.published = pubList;
+    meta.published = pubList;
 
-    //Create an abbreviated, summary form of the metadata for use in
+    //Create an abbreviated, summary form of the meta for use in
     //summaries like home page and atom feed.
-    lang.mixin(truncatedPostData, metadata, true);
+    lang.mixin(truncatedPostData, meta, true);
     lang.mixin(truncatedPostData, {
         published: pubList.slice(0, truncateLimit)
     }, true);
@@ -228,10 +182,10 @@ function publish(args) {
     tags.list.sort();
     tags.list.forEach(function (tag) {
         var tagSlug = slug(tag),
-            tagPath = path.join(pubDir, 'tags', tagSlug),
+            tagPath = pdir('tags', tagSlug),
             published = tags.unique[tag],
             tagUrl = tagSlug + '/',
-            url = metadata.url + 'tags/' + tagUrl,
+            url = meta.url + 'tags/' + tagUrl,
             lastPost = published && published[0],
             tagData = {
                 tag: tag,
@@ -247,63 +201,87 @@ function publish(args) {
         tagSummaryData.tags.push(tagData);
 
         //Tag's index.
-        file.mkdirs(tagPath);
-        lang.mixin(tagData, metadata);
-        tagData.rootPath = '../..';
+        lang.mixin(tagData, meta);
         tagData.atomUrl = url + '/atom.xml';
-        html = render(tagIndexTemplate, tagData);
-        file.write(path.join(tagPath, 'index.html'), html);
+        convert(templates.tags.name.index_html, tagData,
+                path.join(tagPath, 'index.html'), '../..');
 
         //Atom feed, limit to truncate limit
         tagData.published = tagData.published.slice(0, truncateLimit);
-        html = render(tagAtomTemplate, tagData);
-        file.write(path.join(tagPath, 'atom.xml'), html);
+
+        convert(templates.tags.name.atom_xml, tagData,
+                path.join(tagPath, 'atom.xml'));
     });
 
     //Generate tag summary.
-    file.mkdirs(path.join(pubDir, 'tags'));
-    lang.mixin(tagSummaryData, metadata);
-    tagSummaryData.rootPath = '..';
-    html = render(tagSummaryTemplate, tagSummaryData);
-    file.write(path.join(pubDir, 'tags', 'index.html'), html);
+    lang.mixin(tagSummaryData, meta);
+    convert(templates.tags.index_html, tagSummaryData,
+            pdir('tags', 'index.html'), '..');
 
     //Hold on to the tag summary data for use on top level pages.
     truncatedPostData.tags = tagSummaryData.tags;
-    metadata.tags = tagSummaryData.tags;
+    meta.tags = tagSummaryData.tags;
 
     //Generate the front page
-    truncatedPostData.rootPath = '.';
-    html = render(file.read(path.join(cwd, 'templates', 'index.html')),
-                  truncatedPostData);
-    file.write(path.join(pubDir, 'index.html'), html);
+    convert(templates.index_html, truncatedPostData,
+            pdir('index.html'), '.');
 
     //the about page
-    truncatedPostData.rootPath = '..';
-    html = render(aboutTemplate, truncatedPostData);
-    file.mkdirs(path.join(pubDir, 'about'));
-    file.write(path.join(pubDir, 'about', 'index.html'), html);
+    convert(templates.about.index_html, truncatedPostData,
+            pdir('about', 'index.html'), '..');
 
     //Generate the atom.xml feed
-    html = render(file.read(path.join(cwd, 'templates', 'atom.xml')),
-                  truncatedPostData);
-    file.write(path.join(pubDir, 'atom.xml'), html);
+    convert(templates.atom_xml, truncatedPostData, pdir('atom.xml'));
 
     //Generate the archives page
-    metadata.rootPath = '..';
-    html = render(file.read(path.join(cwd, 'templates', 'archives', 'index.html')),
-                  metadata);
-    file.mkdirs(path.join(pubDir, 'archives'));
-    file.write(path.join(pubDir, 'archives', 'index.html'), html);
+    data = {};
+    lang.mixin(data, meta);
+    convert(templates.archives.index_html, data, pdir('archives', 'index.html'), '..');
 
     //Copy over any other directories needed to run.
-    ['img', 'js', 'css'].forEach(function (name) {
-        file.copyDir(path.join(cwd, 'templates', name), path.join(pubDir, name));
-    });
+    templates.copySupport(pubDir);
 
     if (draftPath) {
         console.log('Published ' + draftPath + ' to ' + pubPath);
     }
 }
+
+publish.renderPost = function (srcPath, publishedData) {
+    var postData, postPath, srcDir, html,
+        data = {};
+debugger;
+    if (fs.statSync(srcPath).isDirectory()) {
+        srcDir = srcPath;
+        srcPath = path.join(srcDir, 'index.md');
+    }
+
+    //Create a local copy, to allow local additions without affecting
+    //the source publishedItem
+    lang.mixin(data, publishedData);
+
+    postData = post.fromFile(srcPath);
+    lang.mixin(data, postData);
+
+    //Attach some data that is useful for templates
+    data.blogTitle = meta.title;
+    data.atomUrl = meta.atomUrl;
+    data.url = meta.url + data.path + '/';
+    data.postDateString = (new Date(data.postTime)).toUTCString();
+
+    data.description = extractDescription(postData.content);
+
+    postPath = path.join(dirs.published, data.path);
+    file.mkdirs(postPath);
+
+    //Copy all the files over, except index.md
+    if (srcDir) {
+        file.copyDir(srcDir, postPath, null, null, /index\.md/);
+    }
+
+    //Write out the post in HTML form.
+    convert(templates.date.title.index_html, data,
+            path.join(postPath, 'index.html'), '../..');
+};
 
 publish.summary = 'Publishes a draft post in the "drafts" folder to ' +
                   '"published" updates the "built" directory with the post.';
