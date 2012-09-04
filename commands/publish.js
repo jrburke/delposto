@@ -78,6 +78,7 @@ function pdir() {
 
 function publish(args) {
     var draftContents, postData, html, sluggedTitle, pubList, draftDir, data,
+        draftSlug,
         truncatedPostData = {},
         tags = {
             unique: {},
@@ -101,6 +102,9 @@ function publish(args) {
     draftExists(draftPath);
 
     if (draftPath) {
+        //Clean up an previews of the draft
+        file.rm(path.join(dirs.published, 'preview'));
+
         //Figure out if a directory for a draft is in play.
         if (fs.statSync(draftPath).isDirectory()) {
             draftDir = draftPath.replace(/[\/\\]$/, '');
@@ -111,6 +115,7 @@ function publish(args) {
         postData = post.fromFile(draftPath);
 
         shortPubPath += postData.sluggedTitle;
+        draftSlug = postData.sluggedTitle;
         if (!meta.data.published.some(function (item) {
                 return item.path === shortPubPath;
             })) {
@@ -239,13 +244,15 @@ function publish(args) {
     //Generate the archives page
     data = {};
     lang.mixin(data, meta.data);
-    convert(templates.text.archives.index_html, data, pdir('archives', 'index.html'), '..');
+    convert(templates.text.archives.index_html, data, pdir('archives',
+            'index.html'), '..');
 
     //Copy over any other directories needed to run.
     templates.copySupport(pubDir);
 
     if (draftPath) {
-        console.log('Published ' + draftPath + ' to ' + pubPath);
+        console.log('Published ' + draftPath + ' to ' + pubPath + '/' +
+                    draftSlug + '/');
     }
 }
 

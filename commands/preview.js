@@ -51,7 +51,6 @@ function preview(args) {
 
         //Clear out any old data
         file.rm(path.join(dirs.published, 'preview'));
-        file.rm(path.join(dirs.srcPublished, 'preview'));
 
         publish.mixinData(srcTarget, item);
         publish.renderPost(srcTarget, item);
