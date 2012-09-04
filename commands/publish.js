@@ -17,8 +17,8 @@ var file = require('../lib/file'),
     slug = require('slug'),
     Showdown = require('showdown'),
     dirs = require('../lib/dirs'),
-    meta = require('../lib/meta')(),
-    templates = require('../lib/templates')(),
+    meta = require('../lib/meta'),
+    templates = require('../lib/templates'),
     showdownConverter = new Showdown.converter(),
 
     pubSrcRegExp = /\bsrc-published\b/,
@@ -72,7 +72,8 @@ function convert(template, data, outPath, rootPath) {
 
 //Generate a directory in the published area.
 function pdir() {
-    return path.join.apply(path, [dirs.published].concat(arguments));
+    var dirParts = [dirs.published].concat([].slice.call(arguments, 0));
+    return path.join.apply(path, dirParts);
 }
 
 function publish(args) {
@@ -110,18 +111,18 @@ function publish(args) {
         postData = post.fromFile(draftPath);
 
         shortPubPath += postData.sluggedTitle;
-        if (!meta.published.some(function (item) {
+        if (!meta.data.published.some(function (item) {
                 return item.path === shortPubPath;
             })) {
-            meta.published.unshift({
+            meta.data.published.unshift({
                 title: postData.title,
                 path: shortPubPath,
                 postTime: postTime,
                 postIsoDate: postIsoDate
             });
 
-            meta.updatedTime = postTime;
-            meta.updatedIsoDate = postIsoDate;
+            meta.data.updatedTime = postTime;
+            meta.data.updatedIsoDate = postIsoDate;
         }
 
         meta.save();
@@ -140,11 +141,13 @@ function publish(args) {
     }
 
     //Load up all the posts to generate the front page and pages.
-    pubList = meta.published.filter(function (item) {
+    pubList = meta.data.published.filter(function (item) {
         var srcDir = path.join(dirs.srcPublished, item.path),
             srcPath = path.join(srcDir, 'index.md');
 
         if (file.exists(srcPath)) {
+            publish.mixinData(srcPath, item);
+
             publish.renderPost(path.join(dirs.srcPublished, item.path), item);
 
             postData = post.fromFile(srcPath);
@@ -167,13 +170,13 @@ function publish(args) {
         }
     });
 
-    //Use pubList for the meta.published because it should only
+    //Use pubList for the meta.data.published because it should only
     //contain real, existing posts.
-    meta.published = pubList;
+    meta.data.published = pubList;
 
     //Create an abbreviated, summary form of the meta for use in
     //summaries like home page and atom feed.
-    lang.mixin(truncatedPostData, meta, true);
+    lang.mixin(truncatedPostData, meta.data, true);
     lang.mixin(truncatedPostData, {
         published: pubList.slice(0, truncateLimit)
     }, true);
@@ -185,7 +188,7 @@ function publish(args) {
             tagPath = pdir('tags', tagSlug),
             published = tags.unique[tag],
             tagUrl = tagSlug + '/',
-            url = meta.url + 'tags/' + tagUrl,
+            url = meta.data.url + 'tags/' + tagUrl,
             lastPost = published && published[0],
             tagData = {
                 tag: tag,
@@ -201,42 +204,42 @@ function publish(args) {
         tagSummaryData.tags.push(tagData);
 
         //Tag's index.
-        lang.mixin(tagData, meta);
+        lang.mixin(tagData, meta.data);
         tagData.atomUrl = url + '/atom.xml';
-        convert(templates.tags.name.index_html, tagData,
+        convert(templates.text.tags.name.index_html, tagData,
                 path.join(tagPath, 'index.html'), '../..');
 
         //Atom feed, limit to truncate limit
         tagData.published = tagData.published.slice(0, truncateLimit);
 
-        convert(templates.tags.name.atom_xml, tagData,
+        convert(templates.text.tags.name.atom_xml, tagData,
                 path.join(tagPath, 'atom.xml'));
     });
 
     //Generate tag summary.
-    lang.mixin(tagSummaryData, meta);
-    convert(templates.tags.index_html, tagSummaryData,
+    lang.mixin(tagSummaryData, meta.data);
+    convert(templates.text.tags.index_html, tagSummaryData,
             pdir('tags', 'index.html'), '..');
 
     //Hold on to the tag summary data for use on top level pages.
     truncatedPostData.tags = tagSummaryData.tags;
-    meta.tags = tagSummaryData.tags;
+    meta.data.tags = tagSummaryData.tags;
 
     //Generate the front page
-    convert(templates.index_html, truncatedPostData,
+    convert(templates.text.index_html, truncatedPostData,
             pdir('index.html'), '.');
 
     //the about page
-    convert(templates.about.index_html, truncatedPostData,
+    convert(templates.text.about.index_html, truncatedPostData,
             pdir('about', 'index.html'), '..');
 
     //Generate the atom.xml feed
-    convert(templates.atom_xml, truncatedPostData, pdir('atom.xml'));
+    convert(templates.text.atom_xml, truncatedPostData, pdir('atom.xml'));
 
     //Generate the archives page
     data = {};
-    lang.mixin(data, meta);
-    convert(templates.archives.index_html, data, pdir('archives', 'index.html'), '..');
+    lang.mixin(data, meta.data);
+    convert(templates.text.archives.index_html, data, pdir('archives', 'index.html'), '..');
 
     //Copy over any other directories needed to run.
     templates.copySupport(pubDir);
@@ -246,31 +249,35 @@ function publish(args) {
     }
 }
 
+publish.mixinData = function (srcPath, publishData) {
+    var postData;
+
+    if (fs.statSync(srcPath).isDirectory()) {
+        srcPath = path.join(srcPath, 'index.md');
+    }
+
+    postData = post.fromFile(srcPath);
+    lang.mixin(publishData, postData);
+
+    //Attach some data that is useful for templates
+    publishData.blogTitle = meta.data.title;
+    publishData.blogDomain = meta.data.blogDomain;
+    publishData.atomUrl = meta.data.atomUrl;
+    publishData.url = meta.data.url + publishData.path + '/';
+    publishData.postDateString = (new Date(publishData.postTime)).toUTCString();
+
+    publishData.description = extractDescription(publishData.content);
+};
+
 publish.renderPost = function (srcPath, publishedData) {
-    var postData, postPath, srcDir, html,
-        data = {};
-debugger;
+    var postPath, srcDir;
+
     if (fs.statSync(srcPath).isDirectory()) {
         srcDir = srcPath;
         srcPath = path.join(srcDir, 'index.md');
     }
 
-    //Create a local copy, to allow local additions without affecting
-    //the source publishedItem
-    lang.mixin(data, publishedData);
-
-    postData = post.fromFile(srcPath);
-    lang.mixin(data, postData);
-
-    //Attach some data that is useful for templates
-    data.blogTitle = meta.title;
-    data.atomUrl = meta.atomUrl;
-    data.url = meta.url + data.path + '/';
-    data.postDateString = (new Date(data.postTime)).toUTCString();
-
-    data.description = extractDescription(postData.content);
-
-    postPath = path.join(dirs.published, data.path);
+    postPath = path.join(dirs.published, publishedData.path);
     file.mkdirs(postPath);
 
     //Copy all the files over, except index.md
@@ -279,7 +286,7 @@ debugger;
     }
 
     //Write out the post in HTML form.
-    convert(templates.date.title.index_html, data,
+    convert(templates.text.date.title.index_html, publishedData,
             path.join(postPath, 'index.html'), '../..');
 };
 

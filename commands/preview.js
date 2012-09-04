@@ -14,7 +14,7 @@ var fs = require('fs'),
     post = require('../lib/post'),
     file = require('../lib/file'),
     dirs = require('../lib/dirs'),
-    templates = require('../lib/templates')();
+    templates = require('../lib/templates');
 
 function preview(args) {
 
@@ -23,14 +23,16 @@ function preview(args) {
     function triggerPublish() {
         var postDate = new Date(),
             postData = post.fromFile(draftPath),
-            previewPath = 'preview/' + postData.sluggedTitle;
+            previewPath = 'preview/' + postData.sluggedTitle,
+            item = {
+                title: postData.title,
+                path: previewPath,
+                postTime: postDate.getTime(),
+                postIsoDate: postDate.toISOString()
+            };
 
-        publish.renderPost(draftPath, {
-            title: postData.title,
-            path: previewPath,
-            postTime: postDate.getTime(),
-            postIsoDate: postDate.toISOString()
-        });
+        publish.mixinData(draftPath, item);
+        publish.renderPost(draftPath, item);
 
         templates.copySupport(dirs.published);
     }
