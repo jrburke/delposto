@@ -43,7 +43,7 @@ function getDateDir() {
     var now = new Date();
     return [now.getFullYear().toString(),
                            twoDigit(now.getMonth() + 1).toString(),
-                           twoDigit(now.getDate()).toString()].join('');
+                           twoDigit(now.getDate()).toString()].join('/');
 }
 
 function extractDescription(desc) {
@@ -286,8 +286,8 @@ publish.renderPost = function (srcPath, publishedData) {
     }
 
     //Write out the post in HTML form.
-    convert(templates.text.date.title.index_html, publishedData,
-            path.join(postPath, 'index.html'), '../..');
+    convert(templates.text.year.month.day.title.index_html, publishedData,
+            path.join(postPath, 'index.html'), '../../../..');
 };
 
 publish.summary = 'Publishes a draft post in the "drafts" folder to ' +
