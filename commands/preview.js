@@ -14,16 +14,34 @@ var fs = require('fs'),
     post = require('../lib/post'),
     file = require('../lib/file'),
     dirs = require('../lib/dirs'),
+    post = require('../lib/post'),
     templates = require('../lib/templates');
 
 function preview(args) {
 
-    var draftPath = args[0];
+    var draftDir, srcTarget,
+        draftPath = args[0];
+
+    if (!file.exists(draftPath)) {
+        console.log('Draft path does not exist: ' + draftPath);
+        process.exit(1);
+    }
+
+    if (fs.statSync(draftPath).isDirectory()) {
+        draftDir = draftPath;
+        draftPath = path.join(draftDir, 'index.md');
+    }
+
+    srcTarget = draftDir || draftPath;
 
     function triggerPublish() {
-        var postDate = new Date(),
+        delete post.cache[draftPath];
+
+        var elapsed,
+            startTime = (new Date()).getTime(),
+            postDate = new Date(),
             postData = post.fromFile(draftPath),
-            previewPath = 'preview/' + postData.sluggedTitle,
+            previewPath = 'preview/month/day/' + postData.sluggedTitle,
             item = {
                 title: postData.title,
                 path: previewPath,
@@ -31,32 +49,25 @@ function preview(args) {
                 postIsoDate: postDate.toISOString()
             };
 
-        publish.mixinData(draftPath, item);
-        publish.renderPost(draftPath, item);
+        //Clear out any old data
+        file.rm(path.join(dirs.published, 'preview'));
+        file.rm(path.join(dirs.srcPublished, 'preview'));
+
+        publish.mixinData(srcTarget, item);
+        publish.renderPost(srcTarget, item);
 
         templates.copySupport(dirs.published);
+
+        elapsed = ((new Date()).getTime() - startTime) / 1000;
+        console.log('Updated preview of ' + srcTarget + ' at published/' +
+                    item.path + '/, ' + elapsed + ' seconds.');
     }
-
-    //Clear out any old data
-    file.rm(path.join(dirs.published, 'preview'));
-    file.rm(path.join(dirs.srcPublished, 'preview'));
-
 
     triggerPublish();
 
     //Set up a watch on the draftPath
-    fs.watch(draftPath, function (event, filename) {
-        //Do not care what changed, just re-render.
-        var elapsed,
-            startTime = (new Date()).getTime();
+    fs.watch(draftPath, triggerPublish);
 
-        triggerPublish();
-
-        elapsed = ((new Date()).getTime() - startTime) / 1000;
-        console.log('Updated preview of ' + draftPath + ', ' + elapsed +
-                    ' seconds.');
-
-    });
     console.log('Watching ' + draftPath + ' for changes...');
 }
 
