@@ -36,10 +36,10 @@ function printHelp(command, firstArg) {
                     'No docs available');
     } else {
         console.log(path.basename(process.argv[1]) + ' version ' + version +
-            '. Commands:');
+            '. Commands:\n');
 
         fs.readdirSync(commandDir).forEach(function (command) {
-            console.log(command + ': ' +
+            console.log(command.replace(/\.js$/, '') + ': ' +
                 (require('./commands/' + command).summary || ''));
         });
     }
