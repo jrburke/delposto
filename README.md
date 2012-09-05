@@ -78,6 +78,10 @@ choice. If you want to push it to GitHubPages, then
 [volo-ghdeploy](https://github.com/volojs/volo-ghdeploy) can be useful if you
 have [volo](http://volojs.org/) installed.
 
+## Example sites
+
+This tool was created to generate http://jrburke.com
+
 ## Dev Notes
 
 ### Updating Prism
