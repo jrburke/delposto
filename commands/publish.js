@@ -78,7 +78,7 @@ function pdir() {
 
 function publish(args) {
     var draftContents, postData, html, sluggedTitle, pubList, draftDir, data,
-        draftSlug,
+        draftSlug, latestPost,
         truncatedPostData = {},
         tags = {
             unique: {},
@@ -125,9 +125,6 @@ function publish(args) {
                 postTime: postTime,
                 postIsoDate: postIsoDate
             });
-
-            meta.data.updatedTime = postTime;
-            meta.data.updatedIsoDate = postIsoDate;
         }
 
         meta.save();
@@ -143,6 +140,12 @@ function publish(args) {
             file.copyFile(draftPath, path.join(srcPubPath, 'index.md'));
             file.rm(draftDir || draftPath);
         }
+    }
+
+    latestPost = meta.data.published[0];
+    if (latestPost) {
+        meta.data.updatedTime = latestPost.postTime;
+        meta.data.updatedIsoDate = latestPost.postIsoDate;
     }
 
     //Load up all the posts to generate the front page and pages.

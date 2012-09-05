@@ -56,7 +56,6 @@ function create(args) {
             prompt('Author (ex: Jane Doe): ', function (author) {
                 var pubData = {
                     url: url,
-                    atomUrl: url + 'atom.xml',
                     title: title,
                     author: author,
                     published: []
