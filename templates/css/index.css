@@ -5,14 +5,15 @@
 html, body {
     padding: 0;
     margin: 0;
-    font-family: "adelle",Georgia,serif;
-    color: #222222;
+    font-family: Georgia,serif;
+    color: black;
     background-color: white;
 }
 
 h1, h2, h3, h4, h5, h6 {
-    font-family: "ratio-display",verdana,sans-serif;
+    font-family: verdana,sans-serif;
     font-weight: normal;
+    text-transform: lowercase;
 }
 
 h1 a,
@@ -21,35 +22,39 @@ h3 a,
 h4 a,
 h5 a,
 h6 a {
-    color: #221009;
+    color: #090909;
+}
+
+.sectionContent h1,
+.sectionContent h2,
+.sectionContent h3,
+.sectionContent h4,
+.sectionContent h5,
+.sectionContent h6 {
+    margin-left: -1em;
 }
 
 a {
     text-decoration: none;
-    color: #a63c00;
+    color: blue;
 }
 
 a:hover {
     text-decoration: underline;
-    color: #6c2700;
+    color: darkblue;
 }
 
 .header {
     position: relative;
     padding: 2em 0.2em;
-    background-color: #221009;
+    background-color: #090909;
     color: white;
 }
 
 .header h1 {
     margin: 0 0 0 1em;
     color: white;
-    background-color: #221009;
-}
-
-.header h1:before {
-    content: "<t> ";
-    color: #699476;
+    background-color: #090909;
 }
 
 h1 a {
@@ -71,27 +76,21 @@ h1 a {
 .sectionHeader {
     position: relative;
     padding: 1.2em 0;
-    background-color: #699476;
-    font-family: "ratio-display",verdana,sans-serif;
+    background-color: #696969;
+    font-family: verdana,sans-serif;
 }
 
 .sectionHeader h1 {
-    margin: 0 1em 0 1.9em;
+    margin: 0 1em 0 1.8em;
     color: white;
-    text-shadow: 0 1px #221009;
-    text-transform: lowercase;
-}
-
-.sectionHeader h1:before {
-    content: "> ";
-    color: #221009;
+    text-shadow: 0 1px #090909;
 }
 
 .sectionHeader .datetime {
     position: absolute;
     bottom: 0.5em;
     right: 0.5em;
-    color: #a0baa8;
+    color: #a8a8a8;
     font-size: smaller;
 }
 
@@ -109,7 +108,7 @@ h1 a {
 }
 
 .summary h2 a {
-    color: #a63c00;
+    color: blue;
 }
 
 .summary .datetime {
@@ -120,6 +119,15 @@ h1 a {
 .separator {
     margin: 0 0 1em 0;
     color: gray;
+}
+
+.endmark {
+    width: 1em;
+    color: #696969;
+    margin: 2em auto;
+    font-family: verdana,sans-serif;
+    font-weight: normal;
+    font-size: x-large;
 }
 
 /* media queries */
@@ -138,7 +146,118 @@ h1 a {
         display: none;
     }
 
+.sectionContent h1,
+.sectionContent h2,
+.sectionContent h3,
+.sectionContent h4,
+.sectionContent h5,
+.sectionContent h6 {
+    margin-left: 0;
+}
+
     .sectionContent {
         margin: 0 0.5em;
     }
 }
+
+/* START PRISM */
+/**
+ * prism.js default theme for JavaScript, CSS and HTML
+ * Based on dabblet (http://dabblet.com)
+ * @author Lea Verou
+ */
+
+code,
+pre {
+    color: black;
+    font-family: Consolas, Monaco, 'Andale Mono', monospace;
+    direction: ltr;
+    text-align: left;
+    white-space: pre;
+    word-spacing: normal;
+
+    -moz-tab-size: 4;
+    -o-tab-size: 4;
+    tab-size: 4;
+
+    -webkit-hyphens: none;
+    -moz-hyphens: none;
+    -ms-hyphens: none;
+    hyphens: none;
+}
+
+/* Code blocks */
+pre {
+    padding: 1em;
+    margin: .5em 0;
+    overflow: auto;
+}
+
+:not(pre) > code,
+pre {
+    background: #f5f2f0;
+}
+
+/* Inline code */
+:not(pre) > code {
+    padding: .1em;
+    border-radius: .3em;
+}
+
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+    color: slategray;
+}
+
+.token.punctuation {
+    color: #999;
+}
+
+.namespace {
+    opacity: .7;
+}
+
+.token.property,
+.token.tag,
+.token.boolean,
+.token.number {
+    color: #905;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string {
+    color: #690;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+    color: #a67f59;
+    background: hsla(0,0%,100%,.5);
+}
+
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+    color: #07a;
+}
+
+
+.token.regex,
+.token.important {
+    color: #e90;
+}
+
+.token.important {
+    font-weight: bold;
+}
+
+.token.entity {
+    cursor: help;
+}
+/* END PRISM */
