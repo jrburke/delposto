@@ -1,5 +1,8 @@
 A blog posting tool. Creates static HTML and ATOM feeds from Markdown posts.
 
+It should be considered pre-alpha quality. You probably will not like it. It is
+only for fulfilling my personal blogging needs.
+
 ## Requirements
 
 Uses [NodeJS](http://nodejs.org) to run.
