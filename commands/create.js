@@ -54,28 +54,50 @@ function create(args) {
 
         prompt('Blog title: ', function (title) {
             prompt('Author (ex: Jane Doe): ', function (author) {
-                var pubData = {
-                    url: url,
-                    title: title,
-                    author: author,
-                    published: []
-                };
+                var now = new Date();
+                prompt('Date-based post URLs (ex: ' + now.getFullYear() +
+                       '/01/post-title) [Y/n]', function (dateBased) {
+                    var isDateBased = true;
+                    switch (dateBased.toLowerCase()) {
+                        case "false":
+                        case "f":
+                        case "n":
+                        case "no":
+                        case "0":
+                            isDateBased = false;
+                    }
 
-                file.mkdirs(dir);
-                file.mkdirs(path.join(dir, 'drafts'));
-                file.mkdirs(path.join(dir, 'published'));
-                file.mkdirs(path.join(dir, 'src-published'));
-                file.copyDir(path.join(__dirname, '..', 'templates'),
-                             path.join(dir, 'templates'));
+                    var pubData = {
+                        url: url,
+                        title: title,
+                        author: author,
+                        dateBasedUrls: isDateBased,
+                        published: []
+                    };
 
-                file.write(path.join(dir, 'meta.json'),
-                           JSON.stringify(pubData, null, '  '));
+                    file.mkdirs(dir);
+                    file.mkdirs(path.join(dir, 'drafts'));
+                    file.mkdirs(path.join(dir, 'published'));
+                    file.mkdirs(path.join(dir, 'src-published'));
+                    file.copyDir(path.join(__dirname, '..', 'templates'),
+                                 path.join(dir, 'templates'));
 
-                console.log(dir + ' created.');
-                console.log('cd to the directory then do `delposto draft` ' +
-                            'to create a new draft in the "drafts" folder');
-                console.log('To edit the blog info, modify: ' +
-                            path.join(dir, 'meta.json'));
+                    file.write(path.join(dir, 'meta.json'),
+                               JSON.stringify(pubData, null, '  '));
+
+                    console.log(dir + ' created.');
+                    console.log('cd to the directory then do `delposto draft` ' +
+                                'to create a new draft in the "drafts" folder');
+                    if (isDateBased) {
+                        console.log('Post URLs will be automatically generated ' +
+                                    'based on the publish date.');
+                    } else {
+                        console.log("Post URLs will be based on the path to the " +
+                                    "posts' draft files and/or their YAML headers.");
+                    }
+                    console.log('To edit the blog info, modify: ' +
+                                path.join(dir, 'meta.json'));
+                });
             });
         });
     });
