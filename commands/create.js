@@ -54,28 +54,43 @@ function create(args) {
 
         prompt('Blog title: ', function (title) {
             prompt('Author (ex: Jane Doe): ', function (author) {
-                var pubData = {
-                    url: url,
-                    title: title,
-                    author: author,
-                    published: []
-                };
+                var now = new Date();
+                var urlQuestion = 'Post URL type (ex: ' + now.getFullYear() +
+                                  '/01/post-title vs. /some/path/to/post-title) ' +
+                                  '[date/path]:';
+                prompt(urlQuestion, function(urlType) {
+                    var postUrlType = (urlType.toLowerCase() == "path") ? "path" : "date";
+                    var pubData = {
+                        url: url,
+                        title: title,
+                        author: author,
+                        postUrlType: postUrlType,
+                        published: []
+                    };
 
-                file.mkdirs(dir);
-                file.mkdirs(path.join(dir, 'drafts'));
-                file.mkdirs(path.join(dir, 'published'));
-                file.mkdirs(path.join(dir, 'src-published'));
-                file.copyDir(path.join(__dirname, '..', 'templates'),
-                             path.join(dir, 'templates'));
+                    file.mkdirs(dir);
+                    file.mkdirs(path.join(dir, 'drafts'));
+                    file.mkdirs(path.join(dir, 'published'));
+                    file.mkdirs(path.join(dir, 'src-published'));
+                    file.copyDir(path.join(__dirname, '..', 'templates'),
+                                 path.join(dir, 'templates'));
 
-                file.write(path.join(dir, 'meta.json'),
-                           JSON.stringify(pubData, null, '  '));
+                    file.write(path.join(dir, 'meta.json'),
+                               JSON.stringify(pubData, null, '  '));
 
-                console.log(dir + ' created.');
-                console.log('cd to the directory then do `delposto draft` ' +
-                            'to create a new draft in the "drafts" folder');
-                console.log('To edit the blog info, modify: ' +
-                            path.join(dir, 'meta.json'));
+                    console.log(dir + ' created.');
+                    console.log('cd to the directory then do `delposto draft` ' +
+                                'to create a new draft in the "drafts" folder');
+                    if (postUrlType == "date") {
+                        console.log('Post URLs will be automatically generated ' +
+                                    'based on the publish date.');
+                    } else {
+                        console.log("Post URLs will be based on the path to the " +
+                                    "posts' draft files and/or their YAML headers.");
+                    }
+                    console.log('To edit the blog info, modify: ' +
+                                path.join(dir, 'meta.json'));
+                });
             });
         });
     });

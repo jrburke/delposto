@@ -46,6 +46,21 @@ function getDateDir() {
                            twoDigit(now.getDate()).toString()].join('/');
 }
 
+function getBaseDir(draftPath, isDirectory) {
+    var parts = draftPath.split("/");
+    parts.shift(); // chop off the leading 'drafts'
+    parts.pop(); // chop off the filename
+
+    // if the user created the draft with a trailing slash in the name, the
+    // draftPath here will be like drafts/.../name/index.md, so we need to pop
+    // off the name too
+    if (isDirectory) {
+        parts.pop();
+    }
+
+    return parts.join("/");
+}
+
 function extractDescription(desc) {
     desc = (desc || '').trim();
     var text = /[^\r\n]*/.exec(desc);
@@ -93,11 +108,12 @@ function publish(args) {
         postIsoDate = pubDate.toISOString(),
         postDateString = pubDate.toUTCString(),
         postTime = pubDate.getTime(),
-        dateDir = getDateDir(),
-        shortPubPath = dateDir + '/',
         pubDir = dirs.published,
-        pubPath = pdir(dateDir),
-        srcPubPath = path.join(dirs.srcPublished, dateDir);
+        urlType = meta.data.postUrlType || "date",
+        baseDir,
+        shortPubPath,
+        pubPath,
+        srcPubPath;
 
     draftExists(draftPath);
 
@@ -106,11 +122,17 @@ function publish(args) {
         file.rm(path.join(dirs.published, 'preview'));
 
         //Figure out if a directory for a draft is in play.
-        if (fs.statSync(draftPath).isDirectory()) {
+        var isDirectory = fs.statSync(draftPath).isDirectory();
+        if (isDirectory) {
             draftDir = draftPath.replace(/[\/\\]$/, '');
             draftPath = path.join(draftDir, 'index.md');
             draftExists(draftPath);
         }
+
+        baseDir = (urlType == "path") ? getBaseDir(draftPath, isDirectory) : getDateDir();
+        shortPubPath = baseDir + '/';
+        pubPath = pdir(baseDir);
+        srcPubPath = path.join(dirs.srcPublished, baseDir);
 
         postData = post.fromFile(draftPath);
 
