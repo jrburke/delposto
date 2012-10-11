@@ -54,13 +54,27 @@ function create(args) {
 
         prompt('Blog title: ', function (title) {
             prompt('Author (ex: Jane Doe): ', function (author) {
-                var now = new Date();
-                var urlQuestion = 'Post URL type (ex: ' + now.getFullYear() +
-                                  '/01/post-title vs. /some/path/to/post-title) ' +
-                                  '[date/path]:';
-                prompt(urlQuestion, function(urlType) {
-                    var postUrlType = (urlType.toLowerCase() == "path") ? "path" : "date";
-                    var pubData = {
+                var now = new Date(),
+                    urlQuestion = 'Date-based post URLs (ex: ' +
+                                      now.getFullYear() +
+                                      '/01/post-title) [y]? ';
+
+                prompt(urlQuestion, function (dateBased) {
+                    var pubData, postUrlType,
+                        isDateBased = true;
+
+                    switch (dateBased.toLowerCase()) {
+                    case "N":
+                    case "n":
+                    case "no":
+                    case "0":
+                        isDateBased = false;
+                        break;
+                    }
+
+                    postUrlType = isDateBased ? 'date' : 'path';
+
+                    pubData = {
                         url: url,
                         title: title,
                         author: author,
@@ -81,7 +95,7 @@ function create(args) {
                     console.log(dir + ' created.');
                     console.log('cd to the directory then do `delposto draft` ' +
                                 'to create a new draft in the "drafts" folder');
-                    if (postUrlType == "date") {
+                    if (postUrlType === 'date') {
                         console.log('Post URLs will be automatically generated ' +
                                     'based on the publish date.');
                     } else {
