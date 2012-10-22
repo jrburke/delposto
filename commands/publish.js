@@ -109,6 +109,7 @@ function publish(args) {
         postDateString = pubDate.toUTCString(),
         postTime = pubDate.getTime(),
         pubDir = dirs.published,
+        urlType = meta.data.postUrlType || "date",
         baseDir,
         shortPubPath,
         pubPath,
@@ -128,7 +129,7 @@ function publish(args) {
             draftExists(draftPath);
         }
 
-        baseDir = meta.data.dateBasedUrls ? getDateDir() : getBaseDir(draftPath, isDirectory);
+        baseDir = (urlType == "path") ? getBaseDir(draftPath, isDirectory) : getDateDir();
         shortPubPath = baseDir + '/';
         pubPath = pdir(baseDir);
         srcPubPath = path.join(dirs.srcPublished, baseDir);
