@@ -81,7 +81,7 @@ function convert(template, data, outPath, rootPath) {
     if (rootPath) {
         data.rootPath = rootPath;
     }
-    var html = render(template, data);
+    var html = render(template, data, meta);
     file.write(outPath, html);
 }
 
