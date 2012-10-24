@@ -130,7 +130,7 @@ function publish(args) {
         }
 
         baseDir = (urlType == "path") ? getBaseDir(draftPath, isDirectory) : getDateDir();
-        shortPubPath = baseDir + '/';
+        shortPubPath = baseDir.length ? baseDir + '/' : '';
         pubPath = pdir(baseDir);
         srcPubPath = path.join(dirs.srcPublished, baseDir);
 
