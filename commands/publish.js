@@ -274,31 +274,26 @@ function publish(args) {
                 path.join(tagPath, 'atom.xml'));
     });
 
-    //Generate tag summary.
+    //Generate tag summary data and hold onto it for use on top level pages.
     lang.mixin(tagSummaryData, meta.data);
-    convert(templates.text.tags[templateField], tagSummaryData,
-            pdir('tags', 'index.html'), '..');
-
-    //Hold on to the tag summary data for use on top level pages.
     truncatedPostData.tags = tagSummaryData.tags;
     meta.data.tags = tagSummaryData.tags;
 
-    //Generate the front page
-    convert(templates.text[templateField], truncatedPostData,
-            pdir('index.html'), '.');
-
-    //the about page
-    convert(templates.text.about[templateField], truncatedPostData,
-            pdir('about', 'index.html'), '..');
-
-    //Generate the atom.xml feed
-    convert(templates.text.atom_xml, truncatedPostData, pdir('atom.xml'));
-
-    //Generate the archives page
+    //Data for the archives page
     data = {};
     lang.mixin(data, meta.data);
-    convert(templates.text.archives[templateField], data, pdir('archives',
-            'index.html'), '..');
+
+    var pages = [
+        /* Tag summary   */['tags/index',     tagSummaryData,    pdir('tags', 'index.html'),     '..'],
+        /* Front page    */['index',          truncatedPostData, pdir('index.html'),             '.' ],
+        /* About page    */['about/index',    truncatedPostData, pdir('about', 'index.html'),    '..'],
+        /* atom.xml feed */['atom_xml',       truncatedPostData, pdir('atom.xml')                    ],
+        /* Archives page */['archives/index', data,              pdir('archives', 'index.html'), '..']
+    ];
+    pages.forEach(function (pageData) {
+        pageData[0] = resolveTemplate(pageData[0], templates.text);
+        convert.apply(null, pageData);
+    });
 
     //Copy over any other directories needed to run.
     templates.copySupport(pubDir);
