@@ -65,6 +65,27 @@ function getBaseDir(draftPath, isDirectory) {
     return parts.join("/");
 }
 
+function resolveTemplate(templateName, loadedTemplates) {
+    //Look up a template in the provided object (presumably handed to us by whatever
+    //is loaded in the `templates` module). The template name can contain '/' or '.'
+    //to indicate a 'path' in the template object hierarchy:
+    //
+    //templateName == 'post', return loadedTemplates['post_html'] or ...['post_jade'],
+    //
+    //templateName == 'some/nested/post' or 'some.nested.post', return
+    //loadedTemplates.some.nested['post_html'] or ...['post_jade'],
+    //(suffix depends on the template engine)
+    var suffix = '_' + render.getTemplateType(meta.data.templateEngine).fileType,
+        parts = templateName.replace(/\//g, '.').split('.'),
+        found = loadedTemplates;
+
+    for (var i=0; i<parts.length; i++) {
+        found = found && found[parts[i] + ((i == parts.length - 1) ? suffix : '')];
+    }
+
+    return found;
+}
+
 function extractDescription(desc) {
     desc = (desc || '').trim();
     var text = /[^\r\n]*/.exec(desc);
@@ -309,7 +330,7 @@ publish.mixinData = function (srcPath, publishData) {
 };
 
 publish.renderPost = function (srcPath, publishedData) {
-    var postPath, srcDir;
+    var postPath, srcDir, postTemplate;
 
     if (fs.statSync(srcPath).isDirectory()) {
         srcDir = srcPath;
@@ -325,7 +346,13 @@ publish.renderPost = function (srcPath, publishedData) {
     }
 
     //Write out the post in HTML form.
-    convert(templates.text.year.month.day.title[templateField], publishedData,
+    if (publishedData.headers.template) {
+        postTemplate = resolveTemplate(publishedData.headers.template, templates.text);
+    }
+    if (!postTemplate) {
+        postTemplate = templates.text.year.month.day.title[templateField];
+    }
+    convert(postTemplate, publishedData,
             path.join(postPath, 'index.html'), '../../../..');
 };
 
