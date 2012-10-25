@@ -302,7 +302,7 @@ publish.mixinData = function (srcPath, publishData) {
 };
 
 publish.renderPost = function (srcPath, publishedData) {
-    var postPath, srcDir;
+    var postPath, srcDir, parentCount, rootPath;
 
     if (fs.statSync(srcPath).isDirectory()) {
         srcDir = srcPath;
@@ -317,9 +317,13 @@ publish.renderPost = function (srcPath, publishedData) {
         file.copyDir(srcDir, postPath, null, null, /index\.md/);
     }
 
+    //Figure out how deeply nested the post is, to determine the rootPath value
+    parentCount = publishedData.url.replace(meta.data.url, '').split('/').length - 1;
+    rootPath = (new Array(parentCount + 1)).join('../').slice(0, -1);
+
     //Write out the post in HTML form.
     convert(templates.text.year.month.day.title.index_html, publishedData,
-            path.join(postPath, 'index.html'), '../../../..');
+            path.join(postPath, 'index.html'), rootPath);
 };
 
 publish.summary = 'Publishes a draft post in the "drafts" folder to ' +
