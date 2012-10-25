@@ -23,6 +23,10 @@ var file = require('../lib/file'),
 
     pubSrcRegExp = /\bsrc-published\b/,
 
+    //Field name for loaded template data in the `templates` module, either
+    //'index_html' or 'index_jade'
+    templateField,
+
     //How many characters to use for the "description" of a
     //post, which is just that set of characters from the
     //markdown source of the post
@@ -61,6 +65,27 @@ function getBaseDir(draftPath, isDirectory) {
     return parts.join("/");
 }
 
+function resolveTemplate(templateName, loadedTemplates) {
+    //Look up a template in the provided object (presumably handed to us by whatever
+    //is loaded in the `templates` module). The template name can contain '/' or '.'
+    //to indicate a 'path' in the template object hierarchy:
+    //
+    //templateName == 'post', return loadedTemplates['post_html'] or ...['post_jade'],
+    //
+    //templateName == 'some/nested/post' or 'some.nested.post', return
+    //loadedTemplates.some.nested['post_html'] or ...['post_jade'],
+    //(suffix depends on the template engine)
+    var suffix = '_' + render.getTemplateType(meta.data.templateEngine).fileType,
+        parts = templateName.replace(/\//g, '.').split('.'),
+        found = loadedTemplates;
+
+    for (var i=0; i<parts.length; i++) {
+        found = found && found[parts[i] + ((i == parts.length - 1) ? suffix : '')];
+    }
+
+    return found;
+}
+
 function extractDescription(desc) {
     desc = (desc || '').trim();
     var text = /[^\r\n]*/.exec(desc);
@@ -81,7 +106,7 @@ function convert(template, data, outPath, rootPath) {
     if (rootPath) {
         data.rootPath = rootPath;
     }
-    var html = render(template, data);
+    var html = render(template, data, meta);
     file.write(outPath, html);
 }
 
@@ -164,6 +189,9 @@ function publish(args) {
         }
     }
 
+    //Determine where to look for template data
+    templateField = render.getTemplateType(meta.data.templateEngine).template;
+
     latestPost = meta.data.published[0];
     if (latestPost) {
         meta.data.updatedTime = latestPost.postTime;
@@ -236,7 +264,7 @@ function publish(args) {
         //Tag's index.
         lang.mixin(tagData, meta.data);
         tagData.atomUrl = url + '/atom.xml';
-        convert(templates.text.tags.name.index_html, tagData,
+        convert(templates.text.tags.name[templateField], tagData,
                 path.join(tagPath, 'index.html'), '../..');
 
         //Atom feed, limit to truncate limit
@@ -246,31 +274,26 @@ function publish(args) {
                 path.join(tagPath, 'atom.xml'));
     });
 
-    //Generate tag summary.
+    //Generate tag summary data and hold onto it for use on top level pages.
     lang.mixin(tagSummaryData, meta.data);
-    convert(templates.text.tags.index_html, tagSummaryData,
-            pdir('tags', 'index.html'), '..');
-
-    //Hold on to the tag summary data for use on top level pages.
     truncatedPostData.tags = tagSummaryData.tags;
     meta.data.tags = tagSummaryData.tags;
 
-    //Generate the front page
-    convert(templates.text.index_html, truncatedPostData,
-            pdir('index.html'), '.');
-
-    //the about page
-    convert(templates.text.about.index_html, truncatedPostData,
-            pdir('about', 'index.html'), '..');
-
-    //Generate the atom.xml feed
-    convert(templates.text.atom_xml, truncatedPostData, pdir('atom.xml'));
-
-    //Generate the archives page
+    //Data for the archives page
     data = {};
     lang.mixin(data, meta.data);
-    convert(templates.text.archives.index_html, data, pdir('archives',
-            'index.html'), '..');
+
+    var pages = [
+        /* Tag summary   */['tags/index',     tagSummaryData,    pdir('tags', 'index.html'),     '..'],
+        /* Front page    */['index',          truncatedPostData, pdir('index.html'),             '.' ],
+        /* About page    */['about/index',    truncatedPostData, pdir('about', 'index.html'),    '..'],
+        /* atom.xml feed */['atom_xml',       truncatedPostData, pdir('atom.xml')                    ],
+        /* Archives page */['archives/index', data,              pdir('archives', 'index.html'), '..']
+    ];
+    pages.forEach(function (pageData) {
+        pageData[0] = resolveTemplate(pageData[0], templates.text);
+        convert.apply(null, pageData);
+    });
 
     //Copy over any other directories needed to run.
     templates.copySupport(pubDir);
@@ -302,7 +325,7 @@ publish.mixinData = function (srcPath, publishData) {
 };
 
 publish.renderPost = function (srcPath, publishedData) {
-    var postPath, srcDir;
+    var postPath, srcDir, postTemplate, parentCount, rootPath;
 
     if (fs.statSync(srcPath).isDirectory()) {
         srcDir = srcPath;
@@ -318,8 +341,19 @@ publish.renderPost = function (srcPath, publishedData) {
     }
 
     //Write out the post in HTML form.
-    convert(templates.text.year.month.day.title.index_html, publishedData,
-            path.join(postPath, 'index.html'), '../../../..');
+    if (publishedData.headers.template) {
+        postTemplate = resolveTemplate(publishedData.headers.template, templates.text);
+    }
+    if (!postTemplate) {
+        postTemplate = templates.text.year.month.day.title[templateField];
+    }
+
+    //Figure out how deeply nested the post is, to determine the rootPath value
+    parentCount = publishedData.url.replace(meta.data.url, '').split('/').length - 1;
+    rootPath = (new Array(parentCount + 1)).join('../').slice(0, -1);
+
+    convert(postTemplate, publishedData,
+            path.join(postPath, 'index.html'), rootPath);
 };
 
 publish.summary = 'Publishes a draft post in the "drafts" folder to ' +
