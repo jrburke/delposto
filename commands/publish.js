@@ -343,7 +343,7 @@ publish.renderPost = function (srcPath, publishedData) {
         postTemplate = resolveTemplate(publishedData.headers.template, templates.text);
     }
     if (!postTemplate) {
-        postTemplate = templates.text.year.month.day.title[templateField];
+        postTemplate = templates.text.year.month.day.title.index_html;
     }
     convert(postTemplate, publishedData,
             path.join(postPath, 'index.html'), '../../../..');
