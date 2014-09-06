@@ -19,6 +19,7 @@ var file = require('../lib/file'),
     dirs = require('../lib/dirs'),
     meta = require('../lib/meta'),
     templates = require('../lib/templates'),
+    linkMarkRegExp = /\[([^\]]+)\]\([^\)]+\)/g,
     showdownConverter = new Showdown.converter(),
 
     pubSrcRegExp = /\bsrc-published\b/,
@@ -63,6 +64,10 @@ function getBaseDir(draftPath, isDirectory) {
 
 function extractDescription(desc) {
     desc = (desc || '').trim();
+
+    // Convert the string to not have some of the markdown bits first.
+    desc = desc.replace(linkMarkRegExp, '$1');
+
     var text = /[^\r\n]*/.exec(desc);
     text = text[0];
 

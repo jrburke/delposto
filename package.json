@@ -1,6 +1,6 @@
 {
   "name": "delposto",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "dependencies": {
     "slug": "~0.2.2",
     "showdown": "~0.2.0",
